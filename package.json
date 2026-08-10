@@ -4,8 +4,8 @@
   "description": "Simple desktop application to track your time spent on different projects.",
   "main": "./out/main/index.js",
   "author": {
-    "name": "Marco Kellershoff",
-    "email": "marco@kellershoff.net"
+    "name": "The Don't Be Evil Company",
+    "email": "oss@the-dont-be-evil-company.com"
   },
   "license": "MIT",
   "homepage": "https://timetrack.mwco.app",
@@ -13,10 +13,7 @@
   "scripts": {
     "install:electron": "bun run ./node_modules/electron/install.js",
     "format": "prettier --plugin prettier-plugin-svelte --write .",
-    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
-    "typecheck-node": "tsc -p tsconfig.node.json",
-    "svelte-check": "svelte-check --tsconfig ./tsconfig.json",
-    "typecheck": "bun run typecheck-node && bun run svelte-check",
+    "check": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts & tsc -p tsconfig.node.json & svelte-check --tsconfig ./tsconfig.json",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
@@ -25,7 +22,7 @@
     "build-windows": "bun run build && electron-builder --win --publish never",
     "build-macos": "bun run build && electron-builder --mac --publish never",
     "build-linux": "bun run build && electron-builder --linux --publish never",
-    "upgrade": "bunx npm-check-updates -u",
+    "update:dependencies": "bunx npm-check-updates -u",
     "changelog": "./scripts/generate-changelog.sh"
   },
   "dependencies": {

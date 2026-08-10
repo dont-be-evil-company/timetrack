@@ -1,0 +1,71 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+---
+version: '3'
+
+tasks:
+  default:
+    desc: Lists all available tasks
+    cmds:
+      - task --list
+    silent: true
+  install:
+    desc: Install dependencies
+    cmds:
+      - bun install --frozen-lockfile
+      - bun run install:electron
+    silent: true
+  update:dependencies:
+    desc: Updates dependencies
+    cmds:
+      - bun run update:dependencies
+    silent: true
+  build:
+    desc: Builds the app
+    cmds:
+      - bun run build
+    silent: true
+  build:linux:
+    desc: Builds the app for linux
+    cmds:
+      - bun run build:linux
+    silent: true
+  build:mac:
+    desc: Builds the app for linux
+    cmds:
+      - bun run build:mac
+    silent: true
+  build:windows:
+    desc: Builds the app for linux
+    cmds:
+      - bun run build:windows
+    silent: true
+  fmt:
+    desc: Formats all files
+    cmds:
+      - bun run format
+    silent: true
+  check:
+    desc: Checks formatting and linting
+    cmds:
+      - bun run check
+    silent: true
+  test:
+    desc: Runs tests
+    cmds:
+      - bun run test
+    silent: true
+  generate:icons:
+    desc: Generates various sizes of icons for the app
+    cmds:
+      - ./scripts/generate-icons.sh
+    silent: true
+  generate:changelog:
+    desc: Generates the changelog
+    cmds:
+      - bun run changelog
+    silent: true
+  dev:
+    desc: Starts the app in development mode
+    cmds:
+      - bun run dev
+    silent: true
