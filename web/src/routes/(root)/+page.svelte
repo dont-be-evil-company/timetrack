@@ -163,7 +163,7 @@
 				<pre><code
 						class="language-bash"
 						data-toolbar-order="copy-to-clipboard"
-						data-prismjs-copy="📋">yay -S mw-timetrack-bin</code
+						data-prismjs-copy="📋">yay -S dbe-timetrack-bin</code
 					></pre>
 				<p class="mb-5">
 					.. or via <a href="https://github.com/morganamilo/paru" class="text-secondary">paru</a>
@@ -171,7 +171,7 @@
 				<pre><code
 						class="language-bash"
 						data-toolbar-order="copy-to-clipboard"
-						data-prismjs-copy="📋">paru -S mw-timetrack-bin</code
+						data-prismjs-copy="📋">paru -S dbe-timetrack-bin</code
 					></pre>
 				<div class="alert alert-info mt-5">
 					<p>
@@ -179,7 +179,7 @@
 						There is already a package called
 						<code class="rounded-xl bg-gray-900 p-1 text-nowrap text-white">timetrack</code>
 						in AUR, to avoid confusion, the package for this project is called
-						<code class="rounded-xl bg-gray-900 p-1 text-nowrap text-white">mw-timetrack-bin</code>.
+						<code class="rounded-xl bg-gray-900 p-1 text-nowrap text-white">dbe-timetrack-bin</code>.
 					</p>
 				</div>
 			</div>
