@@ -56,7 +56,7 @@ jobs:
       - name: Publish to AUR
         uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
         with:
-          pkgname: mw-timetrack-bin
+          pkgname: dbe-timetrack-bin
           pkgbuild: ./scripts/PKGBUILD
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}

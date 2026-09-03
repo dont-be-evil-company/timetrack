@@ -1,6 +1,6 @@
 {
   "name": "timetrack",
-  "version": "5.16.3",
+  "version": "5.16.4",
   "description": "Simple desktop application to track your time spent on different projects.",
   "main": "./out/main/index.js",
   "author": {
