@@ -19,6 +19,7 @@ export const company = sqliteTable('Company', {
   statusId: integer('statusId')
     .notNull()
     .references(() => status.id, { onDelete: 'restrict' }),
+  tempoConnection: text('tempoConnection'),
 })
 
 export const project = sqliteTable(
@@ -52,6 +53,7 @@ export const taskDefinition = sqliteTable(
     statusId: integer('statusId')
       .notNull()
       .references(() => status.id, { onDelete: 'restrict' }),
+    issueKey: text('issueKey'),
   },
   table => ({
     nameProjectUnique: uniqueIndex('TaskDefinition_name_projectId_key').on(
@@ -72,7 +74,26 @@ export const task = sqliteTable('Task', {
   statusId: integer('statusId')
     .notNull()
     .references(() => status.id, { onDelete: 'restrict' }),
+  issueKey: text('issueKey'),
 })
+
+export const taskExternalSync = sqliteTable(
+  'TaskExternalSync',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    taskId: integer('taskId')
+      .notNull()
+      .references(() => task.id, { onDelete: 'cascade' }),
+    connectionName: text('connectionName').notNull(),
+    remoteId: text('remoteId').notNull(),
+    remoteIssueId: text('remoteIssueId'),
+    contentHash: text('contentHash').notNull(),
+    syncedAt: text('syncedAt').notNull(),
+  },
+  table => ({
+    taskIdUnique: uniqueIndex('TaskExternalSync_taskId_key').on(table.taskId),
+  }),
+)
 
 export const taskAttachment = sqliteTable(
   'TaskAttachment',
@@ -147,7 +168,21 @@ export const taskRelations = relations(task, ({ one, many }) => ({
     references: [status.id],
   }),
   attachments: many(taskAttachment),
+  externalSync: one(taskExternalSync, {
+    fields: [task.id],
+    references: [taskExternalSync.taskId],
+  }),
 }))
+
+export const taskExternalSyncRelations = relations(
+  taskExternalSync,
+  ({ one }) => ({
+    task: one(task, {
+      fields: [taskExternalSync.taskId],
+      references: [task.id],
+    }),
+  }),
+)
 
 export const taskAttachmentRelations = relations(taskAttachment, ({ one }) => ({
   task: one(task, {
@@ -163,3 +198,4 @@ export type Project = InferSelectModel<typeof project>
 export type TaskDefinition = InferSelectModel<typeof taskDefinition>
 export type Task = InferSelectModel<typeof task>
 export type TaskAttachment = InferSelectModel<typeof taskAttachment>
+export type TaskExternalSync = InferSelectModel<typeof taskExternalSync>

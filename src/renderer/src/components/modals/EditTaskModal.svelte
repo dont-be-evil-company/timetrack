@@ -17,11 +17,12 @@
 
   let description = $derived(task.description)
   let status = $derived(task.status)
+  let issueKey = $state(task.issueKey || '')
 
   const parseDateTime = (
     value?: string,
-  ): { date: string; hour: number; minute: number } => {
-    if (!value) return { date: '', hour: 0, minute: 0 }
+  ): { date: string; hour: number; minute: number; second: number } => {
+    if (!value) return { date: '', hour: 0, minute: 0, second: 0 }
     const v = value.trim()
 
     let datePart: string
@@ -36,11 +37,12 @@
       timePart = '00:00:00'
     }
 
-    const [hh, mm] = timePart.split(':')
+    const [hh, mm, ss] = timePart.split(':')
     return {
       date: datePart,
       hour: Number(hh) || 0,
       minute: Number(mm) || 0,
+      second: Number(ss) || 0,
     }
   }
 
@@ -95,10 +97,25 @@
       return
     }
 
+    const startSeconds =
+      startDate === startParsed.date &&
+      startHour === startParsed.hour &&
+      startMinute === startParsed.minute
+        ? startParsed.second
+        : 0
+    const endSeconds =
+      endDate === endParsed.date &&
+      endHour === endParsed.hour &&
+      endMinute === endParsed.minute
+        ? endParsed.second
+        : 0
+
     const startDateTime = `${startDate} ${pad(startHour)}:${pad(
       startMinute,
-    )}:00`
-    const endDateTime = `${endDate} ${pad(endHour)}:${pad(endMinute)}:00`
+    )}:${pad(startSeconds)}`
+    const endDateTime = `${endDate} ${pad(endHour)}:${pad(endMinute)}:${pad(
+      endSeconds,
+    )}`
 
     const result = await window.electron.editTask({
       id: task.id,
@@ -107,6 +124,7 @@
       startDateTime,
       endDateTime,
       status,
+      issueKey: issueKey.trim(),
     })
 
     if (result.success) {
@@ -117,6 +135,7 @@
         startDateTime,
         endDateTime,
         status,
+        issueKey: issueKey.trim(),
       })
     }
   }
@@ -220,8 +239,25 @@
           bind:value={description}
           class="textarea w-full"
           rows="5"
-          placeholder="Task Description"
-        ></textarea>
+          placeholder="Task Description"></textarea>
+      </div>
+      <div class="form-control mt-4">
+        <label class="label" for="issueKey">
+          <span class="label-text">Issue key</span>
+          <span
+            class="tooltip"
+            data-tip="Optional. Used when syncing to Tempo, e.g. PROJ-42"
+          >
+            *</span
+          >
+        </label>
+        <input
+          id="issueKey"
+          type="text"
+          bind:value={issueKey}
+          class="input input-bordered"
+          placeholder="PROJ-42"
+        />
       </div>
       <div class="form-control mt-4 {isActive ? 'hidden' : ''}">
         <label class="label">
@@ -324,7 +360,7 @@
     {/if}
 
     {#if attachmentsLoading}
-      <p class="text-sm opacity-70">Loading attachments…</p>
+      <p class="text-sm opacity-70">Loading attachments...</p>
     {:else if attachments.length === 0}
       <p class="text-sm opacity-70">No attachments yet.</p>
     {:else}

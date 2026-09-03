@@ -253,7 +253,10 @@
                   <option
                     selected={$selectedTaskDefinition &&
                       $selectedTaskDefinition.name === td.name}
-                    value={td.id}>{td.name}</option
+                    value={td.id}
+                    >{td.issueKey
+                      ? `${td.issueKey} · ${td.name}`
+                      : td.name}</option
                   >
                 {/each}
               </select>

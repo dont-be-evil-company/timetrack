@@ -58,6 +58,8 @@ import {
   saveActiveTask,
   saveActiveTasks,
 } from '../database'
+import { getTempoConnectionNames } from '../lib/SyncConfig'
+import { syncCompanyToTempo } from '../lib/tempo/sync'
 import { mimeTypeFromFilename } from '../lib/mime'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { company, project, task, taskDefinition } from '../db/schema'
@@ -511,7 +513,6 @@ export const initIpcHandlers = async (
         return { success: false, canceled: true }
       }
 
-
       fs.writeFileSync(
         dialogResult.filePath,
         Buffer.from(attachment.dataBase64, 'base64') as unknown as string,
@@ -628,6 +629,14 @@ export const initIpcHandlers = async (
   )
   ipcMain.handle('getSearchResult', async (_, opts: SearchQuery) =>
     getSearchResult(DB, opts),
+  )
+  ipcMain.handle('getTempoConnections', async () => getTempoConnectionNames())
+  ipcMain.handle(
+    'syncCompanyToTempo',
+    async (_, companyId: string): Promise<TempoSyncResult> => {
+      const activeTaskIds = new Set(activeTasks.map(t => t.taskId))
+      return syncCompanyToTempo(DB, companyId, activeTaskIds)
+    },
   )
 
   handlersInitialized = true

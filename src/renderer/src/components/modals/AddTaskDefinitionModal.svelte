@@ -9,6 +9,7 @@
   }>()
 
   let taskDefinitionName = $state('')
+  let issueKey = $state('')
   let taskDefinitionNameInput: HTMLInputElement
 
   async function handleSubmit(e: Event) {
@@ -20,6 +21,7 @@
     const result = await window.electron.addTaskDefinition({
       projectId: project.id,
       name: taskDefinitionName.trim(),
+      issueKey: issueKey.trim() || null,
     })
     if (result.success) {
       await onSuccess()
@@ -47,6 +49,18 @@
           bind:value={taskDefinitionName}
           class="input input-bordered"
           required
+        />
+      </div>
+      <div class="form-control mt-4">
+        <label class="label" for="issueKey">
+          <span class="label-text">Default issue key</span>
+        </label>
+        <input
+          id="issueKey"
+          type="text"
+          bind:value={issueKey}
+          class="input input-bordered"
+          placeholder="PROJ-42"
         />
       </div>
       <div class="modal-action">

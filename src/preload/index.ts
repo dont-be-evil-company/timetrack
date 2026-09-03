@@ -230,6 +230,13 @@ const API = {
     return await ipcRenderer.invoke('saveAttachmentToFile', id, defaultPath)
   },
 
+  getTempoConnections: async (): Promise<string[]> => {
+    return await ipcRenderer.invoke('getTempoConnections')
+  },
+  syncCompanyToTempo: async (companyId: string): Promise<TempoSyncResult> => {
+    return await ipcRenderer.invoke('syncCompanyToTempo', companyId)
+  },
+
   // Events
   on: (channel: string, callback: (data: unknown) => void) => {
     ipcRenderer.on(channel, (_, data) => callback(data))

@@ -4,6 +4,7 @@
     onClose: () => void
     onSuccess: (company: DBCompany) => void
   }>()
+  import { onMount } from 'svelte'
   import {
     companies,
     selectedCompany,
@@ -14,24 +15,40 @@
 
   let name = $derived(company.name)
   let status = $derived(company.status || 'active')
+  let tempoConnection = $state(company.tempoConnection || '')
+  let tempoConnections: string[] = $state([])
+
+  onMount(async () => {
+    if (window.electron) {
+      tempoConnections = await window.electron.getTempoConnections()
+    }
+  })
 
   async function handleSubmit(e: Event) {
     e.preventDefault()
     if (window.electron) {
+      const nextConnection = tempoConnection.trim() || null
       const result = await window.electron.editCompany({
         id: company.id,
         name,
         status,
+        tempoConnection: nextConnection,
       })
 
       if (result.success) {
-        companies.update(
-          cs =>
-            status === 'active' &&
-            cs.map(c => (c.id === company.id ? { ...c, name, status } : c)),
-        )
+        if (status === 'active') {
+          companies.update(cs =>
+            cs.map(c =>
+              c.id === company.id
+                ? { ...c, name, status, tempoConnection: nextConnection }
+                : c,
+            ),
+          )
+        }
         selectedCompany.update(c =>
-          c && c.id === company.id ? { ...c, name, status } : c,
+          c && c.id === company.id
+            ? { ...c, name, status, tempoConnection: nextConnection }
+            : c,
         )
         if (status !== 'active') {
           selectedProject.set(null)
@@ -42,7 +59,12 @@
           return
         }
 
-        onSuccess({ id: company.id, name, status })
+        onSuccess({
+          id: company.id,
+          name,
+          status,
+          tempoConnection: nextConnection,
+        })
       }
     }
   }
@@ -79,6 +101,23 @@
           <option value="inactive">Inactive</option>
         </select>
       </div>
+      {#if tempoConnections.length > 0}
+        <div class="form-control mt-4">
+          <label class="label" for="tempoConnection">
+            <span class="label-text">Tempo connection</span>
+          </label>
+          <select
+            id="tempoConnection"
+            bind:value={tempoConnection}
+            class="select select-bordered"
+          >
+            <option value="">None</option>
+            {#each tempoConnections as connectionName (connectionName)}
+              <option value={connectionName}>{connectionName}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
       <div class="modal-action">
         <button type="submit" class="btn btn-success">Edit</button>
         <button type="button" class="btn" onclick={onClose}>Cancel</button>

@@ -29,6 +29,13 @@
       "when": 1783000000000,
       "tag": "2026073112000_task_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788432000000,
+      "tag": "2026090312000_issue_key_and_sync",
+      "breakpoints": true
     }
   ]
 }

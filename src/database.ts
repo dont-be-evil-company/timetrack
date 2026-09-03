@@ -13,6 +13,7 @@ import {
   task,
   taskAttachment,
   taskDefinition,
+  taskExternalSync,
 } from './db/schema'
 import { and, eq, inArray, like, sql } from 'drizzle-orm'
 import { migrate } from 'drizzle-orm/libsql/migrator'
@@ -50,6 +51,62 @@ const normalizeDateString = (dateStr: string): string => {
     return dateStr.split(' ')[0]
   }
   return dateStr
+}
+
+type TaskQueryRow = {
+  id: number
+  taskDefinitionId: number
+  description: string | null
+  startDateTime: string | Date
+  endDateTime: string | Date
+  status: string
+  taskDefinitionName: string
+  projectName: string
+  companyName: string
+  issueKey: string | null
+  durationSeconds?: number | null
+}
+
+const emptyToNull = (value?: string | null): string | null => {
+  if (value === undefined || value === null) return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+const mapTaskRow = (t: TaskQueryRow): DBTask => {
+  const start =
+    typeof t.startDateTime === 'string'
+      ? t.startDateTime
+      : (t.startDateTime as Date).toISOString()
+  const end =
+    typeof t.endDateTime === 'string'
+      ? t.endDateTime
+      : (t.endDateTime as Date).toISOString()
+  const dateStr = normalizeDateString(start)
+  const seconds =
+    t.durationSeconds != null
+      ? Math.max(0, t.durationSeconds)
+      : Math.max(
+          0,
+          Math.floor(
+            (new Date(end).getTime() - new Date(start).getTime()) / 1000,
+          ),
+        )
+
+  return {
+    id: t.id.toString(),
+    name: t.taskDefinitionName,
+    taskDefinitionId: t.taskDefinitionId.toString(),
+    projectName: t.projectName,
+    companyName: t.companyName,
+    description: t.description || '',
+    seconds,
+    date: dateStr,
+    status: t.status,
+    startDateTime: start,
+    endDateTime: end,
+    issueKey: t.issueKey || undefined,
+  }
 }
 
 let db: ReturnType<typeof drizzle> | null = null
@@ -196,6 +253,7 @@ const getTaskByTaskDefinitionAndDate = async (
       taskDefinitionName: taskDefinition.name,
       projectName: project.name,
       companyName: company.name,
+      issueKey: task.issueKey,
     })
     .from(task)
     .innerJoin(taskDefinition, eq(task.taskDefinitionId, taskDefinition.id))
@@ -216,34 +274,7 @@ const getTaskByTaskDefinitionAndDate = async (
     return null
   }
 
-  const t = result[0]
-  const start =
-    typeof t.startDateTime === 'string'
-      ? t.startDateTime
-      : (t.startDateTime as Date).toISOString()
-  const end =
-    typeof t.endDateTime === 'string'
-      ? t.endDateTime
-      : (t.endDateTime as Date).toISOString()
-  const dateStr = normalizeDateString(start)
-  const seconds = Math.max(
-    0,
-    Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 1000),
-  )
-
-  return {
-    id: t.id.toString(),
-    name: t.taskDefinitionName,
-    taskDefinitionId: t.taskDefinitionId.toString(),
-    projectName: t.projectName,
-    description: t.description || '',
-    seconds,
-    date: dateStr,
-    status: t.status,
-    companyName: t.companyName,
-    startDateTime: start,
-    endDateTime: end,
-  }
+  return mapTaskRow(result[0])
 }
 
 const getTaskById = async (
@@ -261,6 +292,7 @@ const getTaskById = async (
       taskDefinitionName: taskDefinition.name,
       projectName: project.name,
       companyName: company.name,
+      issueKey: task.issueKey,
     })
     .from(task)
     .innerJoin(taskDefinition, eq(task.taskDefinitionId, taskDefinition.id))
@@ -274,34 +306,7 @@ const getTaskById = async (
     return null
   }
 
-  const t = result[0]
-  const start =
-    typeof t.startDateTime === 'string'
-      ? t.startDateTime
-      : (t.startDateTime as Date).toISOString()
-  const end =
-    typeof t.endDateTime === 'string'
-      ? t.endDateTime
-      : (t.endDateTime as Date).toISOString()
-  const dateStr = normalizeDateString(start)
-  const seconds = Math.max(
-    0,
-    Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 1000),
-  )
-
-  return {
-    id: t.id.toString(),
-    name: t.taskDefinitionName,
-    taskDefinitionId: t.taskDefinitionId.toString(),
-    projectName: t.projectName,
-    companyName: t.companyName,
-    description: t.description || '',
-    seconds,
-    date: dateStr,
-    status: t.status,
-    startDateTime: start,
-    endDateTime: end,
-  }
+  return mapTaskRow(result[0])
 }
 
 const getSearchResult = async (
@@ -343,6 +348,7 @@ const getSearchResult = async (
         id: company.id,
         name: company.name,
         status: status.name,
+        tempoConnection: company.tempoConnection,
       })
       .from(company)
       .innerJoin(status, eq(company.statusId, status.id))
@@ -365,6 +371,7 @@ const getSearchResult = async (
       id: c.id.toString(),
       name: c.name,
       status: c.status,
+      tempoConnection: c.tempoConnection || undefined,
     }))
   }
 
@@ -432,6 +439,7 @@ const getSearchResult = async (
         projectId: taskDefinition.projectId,
         projectName: project.name,
         status: status.name,
+        issueKey: taskDefinition.issueKey,
       })
       .from(taskDefinition)
       .innerJoin(project, eq(taskDefinition.projectId, project.id))
@@ -448,6 +456,7 @@ const getSearchResult = async (
       projectId: td.projectId.toString(),
       projectName: td.projectName,
       status: td.status,
+      issueKey: td.issueKey || undefined,
     }))
   }
 
@@ -522,6 +531,7 @@ const getSearchResult = async (
         taskDefinitionName: taskDefinition.name,
         projectName: project.name,
         companyName: company.name,
+        issueKey: task.issueKey,
       })
       .from(task)
       .innerJoin(taskDefinition, eq(task.taskDefinitionId, taskDefinition.id))
@@ -559,33 +569,10 @@ const getSearchResult = async (
       }
     }
 
-    results.tasks = tasks.map(t => {
-      const start =
-        typeof t.startDateTime === 'string'
-          ? t.startDateTime
-          : (t.startDateTime as Date).toISOString()
-      const end =
-        typeof t.endDateTime === 'string'
-          ? t.endDateTime
-          : (t.endDateTime as Date).toISOString()
-      const dateStr = normalizeDateString(start)
-      const seconds = Math.max(0, t.durationSeconds ?? 0)
-
-      return {
-        id: t.id.toString(),
-        name: t.taskDefinitionName,
-        taskDefinitionId: t.taskDefinitionId.toString(),
-        projectName: t.projectName,
-        date: dateStr,
-        description: t.description || '',
-        seconds,
-        status: t.status,
-        companyName: t.companyName,
-        startDateTime: start,
-        endDateTime: end,
-        attachmentFilenames: matchingAttachmentsByTask.get(t.id) || [],
-      }
-    })
+    results.tasks = tasks.map(t => ({
+      ...mapTaskRow(t),
+      attachmentFilenames: matchingAttachmentsByTask.get(t.id) || [],
+    }))
   }
 
   if (q.search_in.includes('attachments')) {
@@ -834,6 +821,7 @@ const getCompanyByName = async (
       id: company.id,
       name: company.name,
       status: status.name,
+      tempoConnection: company.tempoConnection,
     })
     .from(company)
     .innerJoin(status, eq(company.statusId, status.id))
@@ -847,6 +835,7 @@ const getCompanyByName = async (
     id: c.id.toString(),
     name: c.name,
     status: c.status,
+    tempoConnection: c.tempoConnection || undefined,
   }
 }
 
@@ -859,6 +848,7 @@ const getCompanyById = async (
       id: company.id,
       name: company.name,
       status: status.name,
+      tempoConnection: company.tempoConnection,
     })
     .from(company)
     .innerJoin(status, eq(company.statusId, status.id))
@@ -872,6 +862,7 @@ const getCompanyById = async (
     id: c.id.toString(),
     name: c.name,
     status: c.status,
+    tempoConnection: c.tempoConnection || undefined,
   }
 }
 
@@ -886,6 +877,7 @@ const getCompanies = async (
       id: company.id,
       name: company.name,
       status: status.name,
+      tempoConnection: company.tempoConnection,
     })
     .from(company)
     .innerJoin(status, eq(company.statusId, status.id))
@@ -895,6 +887,7 @@ const getCompanies = async (
     id: c.id.toString(),
     name: c.name,
     status: c.status,
+    tempoConnection: c.tempoConnection || undefined,
   }))
 }
 
@@ -949,10 +942,17 @@ const editCompany = async (
   db: ReturnType<typeof drizzle>,
   opts: DBEditCompanyOpts,
 ) => {
-  const updateData: { name: string; statusId?: number } = { name: opts.name }
+  const updateData: {
+    name: string
+    statusId?: number
+    tempoConnection?: string | null
+  } = { name: opts.name }
   if (opts.status !== undefined) {
     const statusId = await getOrCreateStatus(db, opts.status)
     updateData.statusId = statusId
+  }
+  if (opts.tempoConnection !== undefined) {
+    updateData.tempoConnection = emptyToNull(opts.tempoConnection)
   }
 
   await db
@@ -1199,6 +1199,7 @@ const getTaskDefinitionByName = async (
       projectId: taskDefinition.projectId,
       projectName: project.name,
       statusId: taskDefinition.statusId,
+      issueKey: taskDefinition.issueKey,
     })
     .from(taskDefinition)
     .innerJoin(project, eq(taskDefinition.projectId, project.id))
@@ -1219,6 +1220,7 @@ const getTaskDefinitionByName = async (
     projectId: td.projectId.toString(),
     projectName: td.projectName,
     statusId: td.statusId,
+    issueKey: td.issueKey || undefined,
   }
 }
 
@@ -1250,8 +1252,13 @@ const addTaskDefinition = async (
       name: opts.name,
       projectId: parseInt(opts.projectId),
       statusId: activeStatusId,
+      issueKey: emptyToNull(opts.issueKey),
     })
-    .returning({ id: taskDefinition.id, name: taskDefinition.name })
+    .returning({
+      id: taskDefinition.id,
+      name: taskDefinition.name,
+      issueKey: taskDefinition.issueKey,
+    })
 
   const project = await getProjectById(db, opts.projectId)
   if (!project) {
@@ -1265,6 +1272,7 @@ const addTaskDefinition = async (
       name: result[0].name,
       projectId: opts.projectId,
       projectName: project.name,
+      issueKey: result[0].issueKey || undefined,
     },
   }
 }
@@ -1335,18 +1343,38 @@ const editTaskDefinition = async (
   db: ReturnType<typeof drizzle>,
   opts: DBEditTaskDefinitionOpts,
 ) => {
-  const updateData: { name: string; statusId?: number } = {
+  const updateData: {
+    name: string
+    statusId?: number
+    issueKey?: string | null
+  } = {
     name: opts.name,
   }
   if (opts.status !== undefined) {
     const statusId = await getOrCreateStatus(db, opts.status)
     updateData.statusId = statusId
   }
+  if (opts.issueKey !== undefined) {
+    updateData.issueKey = emptyToNull(opts.issueKey)
+  }
 
   await db
     .update(taskDefinition)
     .set(updateData)
     .where(eq(taskDefinition.id, parseInt(opts.id)))
+
+  const definitionIssueKey = emptyToNull(opts.issueKey)
+  if (definitionIssueKey) {
+    await db
+      .update(task)
+      .set({ issueKey: definitionIssueKey })
+      .where(
+        and(
+          eq(task.taskDefinitionId, parseInt(opts.id)),
+          sql`(${task.issueKey} IS NULL OR TRIM(${task.issueKey}) = '')`,
+        ),
+      )
+  }
 
   return { success: true }
 }
@@ -1373,6 +1401,7 @@ const getTaskDefinitions = async (
       projectId: taskDefinition.projectId,
       projectName: project.name,
       status: status.name,
+      issueKey: taskDefinition.issueKey,
     })
     .from(taskDefinition)
     .innerJoin(project, eq(taskDefinition.projectId, project.id))
@@ -1385,6 +1414,7 @@ const getTaskDefinitions = async (
     projectId: t.projectId.toString(),
     projectName: t.projectName,
     status: t.status,
+    issueKey: t.issueKey || undefined,
   }))
 }
 
@@ -1398,6 +1428,7 @@ const getAllTaskDefinitions = async (
       projectId: taskDefinition.projectId,
       projectName: project.name,
       status: status.name,
+      issueKey: taskDefinition.issueKey,
     })
     .from(taskDefinition)
     .innerJoin(project, eq(taskDefinition.projectId, project.id))
@@ -1409,6 +1440,7 @@ const getAllTaskDefinitions = async (
     projectId: t.projectId.toString(),
     projectName: t.projectName,
     status: t.status,
+    issueKey: t.issueKey || undefined,
   }))
 }
 
@@ -1425,6 +1457,16 @@ const addTask = async (db: ReturnType<typeof drizzle>, opts: DBAddTaskOpts) => {
   const ss = pad(now.getSeconds())
   const nowLocal = `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`
 
+  let issueKey = emptyToNull(opts.issueKey)
+  if (!issueKey) {
+    const definition = await db
+      .select({ issueKey: taskDefinition.issueKey })
+      .from(taskDefinition)
+      .where(eq(taskDefinition.id, parseInt(opts.taskDefinitionId)))
+      .limit(1)
+    issueKey = emptyToNull(definition[0]?.issueKey)
+  }
+
   const result = await db
     .insert(task)
     .values({
@@ -1433,6 +1475,7 @@ const addTask = async (db: ReturnType<typeof drizzle>, opts: DBAddTaskOpts) => {
       startDateTime: nowLocal,
       endDateTime: nowLocal,
       statusId: activeStatusId,
+      issueKey,
     })
     .returning({ id: task.id })
 
@@ -1450,6 +1493,7 @@ const editTask = async (
     startDateTime: string
     endDateTime: string
     statusId: number
+    issueKey?: string | null
   } = {
     description: opts.description,
     // Normalize to canonical SQLite DATETIME 'YYYY-MM-DD HH:MM:SS'
@@ -1468,6 +1512,7 @@ const editTask = async (
     const statusId = await getOrCreateStatus(db, opts.status)
     updateData.statusId = statusId
   }
+  updateData.issueKey = emptyToNull(opts.issueKey)
 
   const existingTaskResult = await db
     .select()
@@ -1515,6 +1560,7 @@ const getTasks = async (
       taskDefinitionName: taskDefinition.name,
       projectName: project.name,
       companyName: company.name,
+      issueKey: task.issueKey,
     })
     .from(task)
     .innerJoin(taskDefinition, eq(task.taskDefinitionId, taskDefinition.id))
@@ -1550,6 +1596,7 @@ const getTasks = async (
       companyName: t.companyName,
       startDateTime: start,
       endDateTime: end,
+      issueKey: t.issueKey || undefined,
     }
   })
 }
@@ -1569,6 +1616,7 @@ const getTasksByNameAndProject = async (
       taskDefinitionName: taskDefinition.name,
       projectName: project.name,
       companyName: company.name,
+      issueKey: task.issueKey,
     })
     .from(task)
     .innerJoin(taskDefinition, eq(task.taskDefinitionId, taskDefinition.id))
@@ -1604,6 +1652,7 @@ const getTasksByNameAndProject = async (
       companyName: t.companyName,
       startDateTime: start,
       endDateTime: end,
+      issueKey: t.issueKey || undefined,
     }
   })
 }
@@ -1638,6 +1687,7 @@ const getTasksToday = async (
       taskDefinitionName: taskDefinition.name,
       projectName: project.name,
       companyName: company.name,
+      issueKey: task.issueKey,
     })
     .from(task)
     .innerJoin(taskDefinition, eq(task.taskDefinitionId, taskDefinition.id))
@@ -1680,6 +1730,7 @@ const getTasksToday = async (
       status: t.status,
       startDateTime: start,
       endDateTime: end,
+      issueKey: t.issueKey || undefined,
     }
   })
 }
@@ -1696,10 +1747,14 @@ const getTasksByCompany = async (
       description: task.description,
       startDateTime: task.startDateTime,
       endDateTime: task.endDateTime,
+      durationSeconds: sql<number>`CAST((julianday(${task.endDateTime}) - julianday(${task.startDateTime})) * 86400 AS INTEGER)`,
       status: status.name,
       taskDefinitionName: taskDefinition.name,
       projectName: project.name,
       companyName: company.name,
+      issueKey: sql<
+        string | null
+      >`NULLIF(TRIM(COALESCE(${task.issueKey}, ${taskDefinition.issueKey})), '')`,
     })
     .from(task)
     .innerJoin(taskDefinition, eq(task.taskDefinitionId, taskDefinition.id))
@@ -1708,35 +1763,7 @@ const getTasksByCompany = async (
     .innerJoin(status, eq(task.statusId, status.id))
     .where(eq(company.id, parseInt(companyId)))
 
-  return tasks.map(t => {
-    const start =
-      typeof t.startDateTime === 'string'
-        ? t.startDateTime
-        : (t.startDateTime as Date).toISOString()
-    const end =
-      typeof t.endDateTime === 'string'
-        ? t.endDateTime
-        : (t.endDateTime as Date).toISOString()
-    const dateStr = normalizeDateString(start)
-    const seconds = Math.max(
-      0,
-      Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 1000),
-    )
-
-    return {
-      id: t.id.toString(),
-      name: t.taskDefinitionName,
-      taskDefinitionId: t.taskDefinitionId.toString(),
-      projectName: t.projectName,
-      description: t.description || '',
-      seconds,
-      date: dateStr,
-      status: t.status,
-      companyName: t.companyName,
-      startDateTime: start,
-      endDateTime: end,
-    }
-  })
+  return tasks.map(mapTaskRow)
 }
 
 const getTasksByProject = async (
@@ -1952,6 +1979,63 @@ const getTaskAttachmentData = async (
   }
 }
 
+export type TaskExternalSyncRow = {
+  id: number
+  taskId: number
+  connectionName: string
+  remoteId: string
+  remoteIssueId: string | null
+  contentHash: string
+  syncedAt: string
+}
+
+const getTaskExternalSync = async (
+  db: ReturnType<typeof drizzle>,
+  taskId: string,
+): Promise<TaskExternalSyncRow | null> => {
+  const rows = await db
+    .select()
+    .from(taskExternalSync)
+    .where(eq(taskExternalSync.taskId, parseInt(taskId)))
+    .limit(1)
+  return rows[0] ?? null
+}
+
+const upsertTaskExternalSync = async (
+  db: ReturnType<typeof drizzle>,
+  opts: {
+    taskId: string
+    connectionName: string
+    remoteId: string
+    remoteIssueId?: string | null
+    contentHash: string
+  },
+) => {
+  const existing = await getTaskExternalSync(db, opts.taskId)
+  const syncedAt = new Date().toISOString()
+  if (existing) {
+    await db
+      .update(taskExternalSync)
+      .set({
+        connectionName: opts.connectionName,
+        remoteId: opts.remoteId,
+        remoteIssueId: opts.remoteIssueId ?? null,
+        contentHash: opts.contentHash,
+        syncedAt,
+      })
+      .where(eq(taskExternalSync.id, existing.id))
+    return
+  }
+  await db.insert(taskExternalSync).values({
+    taskId: parseInt(opts.taskId),
+    connectionName: opts.connectionName,
+    remoteId: opts.remoteId,
+    remoteIssueId: opts.remoteIssueId ?? null,
+    contentHash: opts.contentHash,
+    syncedAt,
+  })
+}
+
 export {
   addCompany,
   addProject,
@@ -1969,6 +2053,7 @@ export {
   editTaskDefinition,
   getAllTaskDefinitions,
   getCompanies,
+  getCompanyById,
   getCompanyByName,
   getDataForPDFExport,
   getProjectByName,
@@ -1979,6 +2064,7 @@ export {
   getTaskByTaskDefinitionAndDate,
   getTaskDefinitionByName,
   getTaskDefinitions,
+  getTaskExternalSync,
   getTasks,
   getTasksByCompany,
   getTasksByNameAndProject,
@@ -1992,4 +2078,5 @@ export {
   renameTaskAttachment,
   saveActiveTask,
   saveActiveTasks,
+  upsertTaskExternalSync,
 }

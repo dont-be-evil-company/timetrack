@@ -4,13 +4,16 @@
   import AddCompanyModal from './modals/AddCompanyModal.svelte'
   import EditCompanyModal from './modals/EditCompanyModal.svelte'
   import DeleteCompanyModal from './modals/DeleteCompanyModal.svelte'
-  import { Plus, SquarePen, Store, Trash } from '@lucide/svelte'
+  import TempoSyncResultModal from './modals/TempoSyncResultModal.svelte'
+  import { Plus, SquarePen, Store, Trash, RefreshCw } from '@lucide/svelte'
 
   let companiesList: DBCompany[] = $state([])
   let showEditModal = $state(false)
   let showDeleteModal = $state(false)
   let showAddModal = $state(false)
   let companyToDelete: DBCompany | null = null
+  let syncing = $state(false)
+  let syncResult: TempoSyncResult | null = $state(null)
 
   companies.subscribe(value => {
     companiesList = value
@@ -80,6 +83,28 @@
     if (editedCompany) {
       // Update selected company if it was edited
       selectedCompany.set(editedCompany)
+    }
+  }
+
+  async function handleSyncToTempo() {
+    if (!window.electron || !$selectedCompany?.id || syncing) return
+    syncing = true
+    try {
+      syncResult = await window.electron.syncCompanyToTempo($selectedCompany.id)
+    } catch (error) {
+      console.error('Error syncing to Tempo:', error)
+      syncResult = {
+        success: false,
+        error: 'Failed to sync to Tempo',
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        unchanged: 0,
+        failed: 0,
+        items: [],
+      }
+    } finally {
+      syncing = false
     }
   }
 </script>
@@ -154,6 +179,23 @@
           >
         </div>
       </li>
+      {#if $selectedCompany.tempoConnection}
+        <li>
+          <div class="tooltip tooltip-bottom" data-tip="Sync to Tempo">
+            <button
+              class="btn hover:btn-accent"
+              onclick={handleSyncToTempo}
+              disabled={syncing}
+            >
+              {#if syncing}
+                <span class="loading loading-spinner loading-sm"></span>
+              {:else}
+                <RefreshCw size="16" />
+              {/if}
+            </button>
+          </div>
+        </li>
+      {/if}
     {/if}
   </ul>
 </div>
@@ -171,6 +213,15 @@
     onSuccess={c => handleCompanyEditModalSuccess(c)}
     onClose={() => {
       showEditModal = false
+    }}
+  />
+{/if}
+
+{#if syncResult}
+  <TempoSyncResultModal
+    result={syncResult}
+    onClose={() => {
+      syncResult = null
     }}
   />
 {/if}

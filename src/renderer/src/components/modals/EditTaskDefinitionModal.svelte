@@ -14,6 +14,7 @@
   let status: 'active' | 'inactive' = $derived(
     taskDefinition && taskDefinition.status,
   )
+  let issueKey = $state(taskDefinition.issueKey || '')
 
   async function handleSubmit(e: Event) {
     e.preventDefault()
@@ -21,6 +22,7 @@
       id: taskDefinition.id,
       name: taskDefName,
       status: status,
+      issueKey,
     })
 
     if (result.success) {
@@ -28,13 +30,13 @@
       taskDefinitions.update(tds =>
         tds.map(td =>
           td.id === taskDefinition.id
-            ? { ...td, name: taskDefName, status }
+            ? { ...td, name: taskDefName, status, issueKey }
             : td,
         ),
       )
       selectedTaskDefinition.update(td =>
         td && td.id === taskDefinition.id
-          ? { ...td, name: taskDefName, status }
+          ? { ...td, name: taskDefName, status, issueKey }
           : td,
       )
       if (status === 'inactive') {
@@ -46,6 +48,7 @@
         ...taskDefinition,
         name: taskDefName,
         status,
+        issueKey,
       })
     }
   }
@@ -65,6 +68,18 @@
           bind:value={taskDefName}
           class="input input-bordered"
           required
+        />
+      </div>
+      <div class="form-control mt-4">
+        <label class="label" for="issueKey">
+          <span class="label-text">Default issue key</span>
+        </label>
+        <input
+          id="issueKey"
+          type="text"
+          bind:value={issueKey}
+          class="input input-bordered"
+          placeholder="PROJ-42"
         />
       </div>
       <div class="form-control mt-4">

@@ -89,6 +89,7 @@ type DBCompany = {
   name: string
   status?: string
   statusId?: number
+  tempoConnection?: string | null
 }
 
 type DBProject = {
@@ -108,6 +109,7 @@ type DBTaskDefinition = {
   projectName: string
   status?: string
   statusId?: number
+  issueKey?: string | null
 }
 
 type DBTask = {
@@ -122,6 +124,7 @@ type DBTask = {
   startDateTime?: string
   endDateTime?: string
   status?: string
+  issueKey?: string | null
 }
 
 type MainProcessActiveTaskMapped = {
@@ -148,6 +151,7 @@ type DBEditCompanyOpts = {
   id: string
   name: string
   status?: string
+  tempoConnection?: string | null
 }
 
 type DBEditProjectOpts = {
@@ -160,12 +164,14 @@ type DBEditProjectOpts = {
 type DBAddTaskDefinitionOpts = {
   name: string
   projectId: string
+  issueKey?: string | null
 }
 
 type DBEditTaskDefinitionOpts = {
   id: string
   name: string
   status?: string
+  issueKey?: string | null
 }
 
 type DBDeleteTaskDefinitionOpts = {
@@ -176,6 +182,7 @@ type DBAddTaskOpts = {
   taskDefinitionId: string
   description: string
   seconds: number
+  issueKey?: string | null
 }
 
 type DBEditTaskOpts = {
@@ -185,10 +192,37 @@ type DBEditTaskOpts = {
   startDateTime: string
   endDateTime: string
   status?: string
+  issueKey?: string | null
 }
 
 type DBDeleteTaskOpts = {
   id: string
+}
+
+type TempoSyncItemStatus =
+  | 'created'
+  | 'updated'
+  | 'skipped'
+  | 'unchanged'
+  | 'failed'
+
+type TempoSyncItemResult = {
+  taskId: string
+  taskName: string
+  issueKey?: string
+  status: TempoSyncItemStatus
+  message?: string
+}
+
+type TempoSyncResult = {
+  success: boolean
+  error?: string
+  created: number
+  updated: number
+  skipped: number
+  unchanged: number
+  failed: number
+  items: TempoSyncItemResult[]
 }
 
 type DBTaskAttachment = {
@@ -343,5 +377,7 @@ interface Window {
       id: string,
       defaultPath?: string,
     ) => Promise<{ success: boolean; canceled?: boolean; filePath?: string }>
+    getTempoConnections: () => Promise<string[]>
+    syncCompanyToTempo: (companyId: string) => Promise<TempoSyncResult>
   }
 }

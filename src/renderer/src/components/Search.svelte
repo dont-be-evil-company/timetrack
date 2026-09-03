@@ -19,7 +19,10 @@
   import EditTaskDefinitionModal from './modals/EditTaskDefinitionModal.svelte'
   import DeleteTaskDefinitionModal from './modals/DeleteTaskDefinitionModal.svelte'
   import InfoBox from './InfoBox.svelte'
-  import { getHMSStringFromSeconds, prepareMarkdownWithBlankLineBreaks } from '../lib/utils'
+  import {
+    getHMSStringFromSeconds,
+    prepareMarkdownWithBlankLineBreaks,
+  } from '../lib/utils'
   import { tick, onMount } from 'svelte'
 
   marked.use({
@@ -277,11 +280,14 @@
       date: task.date,
       description: task.description,
       seconds: task.seconds,
+      issueKey: task.issueKey,
     }))
 
     const csvRows: string[] = []
 
-    csvRows.push('Company Name;Project Name;Task Name;Date;Description;Time')
+    csvRows.push(
+      'Company Name;Project Name;Task Name;Issue Key;Date;Description;Time',
+    )
 
     const formatTime = (seconds: number) => {
       const hours = Math.floor(seconds / 3600)
@@ -301,7 +307,7 @@
 
     for (const task of data) {
       csvRows.push(
-        `${escapeCSV(task.companyName)};${escapeCSV(task.projectName)};${escapeCSV(task.name)};${escapeCSV(task.date)};${escapeCSV(task.description)};${formatTime(task.seconds)}`,
+        `${escapeCSV(task.companyName)};${escapeCSV(task.projectName)};${escapeCSV(task.name)};${escapeCSV(task.issueKey)};${escapeCSV(task.date)};${escapeCSV(task.description)};${formatTime(task.seconds)}`,
       )
     }
 
@@ -933,7 +939,9 @@
                       <div class="card-body">
                         <h3 class="card-title text-lg">{task.name}</h3>
                         <p class="text-sm text-base-content/70">
-                          {task.projectName}
+                          {task.projectName}{task.issueKey
+                            ? ` · ${task.issueKey}`
+                            : ''}
                         </p>
                         {#if task.description}
                           <div class="markdown-content">
