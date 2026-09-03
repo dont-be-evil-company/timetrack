@@ -1,21 +1,21 @@
-# Maintainer: mistweaverco <oss@mistweaverco.com>
+# Maintainer: The Don't Be Evil Company <oss@the-dont-be-evil-company.com>
 
 # INFO:
-# This is prefixed with "mw-" to avoid
+# This is prefixed with "dbe-" to avoid
 # confusion with the already existing "timetrack" gnome package that exist in the AUR.
 # The actual application is called "timetrack", and that's what the binary will be named.
-pkgname=mw-timetrack-bin
+pkgname=dbe-timetrack-bin
 _pkgname=timetrack
 pkgver=0.0.0 # CI will take care
 pkgrel=1
 pkgdesc="Simple, offline-first desktop application to track your time on different projects and tasks."
 arch=('x86_64')
-url="https://github.com/mistweaverco/timetrack"
+url="https://github.com/dont-be-evil-company/timetrack"
 license=('MIT')
 depends=('nss' 'at-spi2-core' 'libxss' 'gtk3' 'alsa-lib' 'libxtst')
 provides=("$_pkgname")
 conflicts=("$_pkgname")
-source=("https://github.com/mistweaverco/timetrack/releases/download/v${pkgver}/timetrack_amd64.deb")
+source=("https://github.com/dont-be-evil-company/timetrack/releases/download/v${pkgver}/timetrack_amd64.deb")
 sha256sums=('PASTE_LATEST_DEB_HASH_HERE')
 
 package() {

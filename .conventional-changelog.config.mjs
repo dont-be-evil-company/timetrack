@@ -1,6 +1,6 @@
 import createPreset from "conventional-changelog-conventionalcommits";
 
-const REPO_URL = "https://github.com/mistweaverco/timetrack";
+const REPO_URL = "https://github.com/dont-be-evil-company/timetrack";
 
 export default createPreset({
   formatCommitUrl: (_context, commit) => `${REPO_URL}/commit/${commit.hash}`,

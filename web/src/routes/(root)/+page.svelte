@@ -21,7 +21,7 @@
 	interface PrismaRegisterButtonContext {
 		element: { parentNode: HTMLElement | null };
 	}
-	const downloadBaseUrl = 'https://github.com/mistweaverco/timetrack/releases/latest/download/';
+	const downloadBaseUrl = 'https://github.com/dont-be-evil-company/timetrack/releases/latest/download/';
 
 	let downloadLink = downloadBaseUrl + 'timetrack-setup-x64.exe';
 
@@ -241,7 +241,7 @@
 			</a>
 			<p class="py-6">Timetrack is open-source and we welcome contributions.</p>
 			<p>
-				View the <a class="text-secondary" href="https://github.com/mistweaverco/timetrack">code</a
+				View the <a class="text-secondary" href="https://github.com/dont-be-evil-company/timetrack">code</a
 				>, and/or check out the
 				<a class="text-secondary" href="/docs">docs</a>.
 			</p>

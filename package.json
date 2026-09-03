@@ -8,7 +8,7 @@
     "email": "oss@the-dont-be-evil-company.com"
   },
   "license": "MIT",
-  "homepage": "https://timetrack.mwco.app",
+  "homepage": "https://timetrack.gaia.ws",
   "private": true,
   "scripts": {
     "install:electron": "bun run ./node_modules/electron/install.js",
