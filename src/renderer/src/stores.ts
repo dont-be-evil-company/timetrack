@@ -46,3 +46,10 @@ export const taskDefinitionsForSelectedProject = derived(
     return $taskDefinitions.filter(td => td.projectId === $selectedProject.id)
   },
 )
+
+export type IssuePickerRequest = {
+  companyId: string
+  onSelect: (issueKey: string) => void
+}
+
+export const issuePicker = writable<IssuePickerRequest | null>(null)

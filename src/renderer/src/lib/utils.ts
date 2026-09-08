@@ -25,7 +25,9 @@ export const getHMSStringFromSeconds = (s: number) => {
  * Insert HTML <br/> for blank lines so they render visually, while leaving
  * fenced code blocks (``` / ~~~) untouched so the tag is not shown as text.
  */
-export const prepareMarkdownWithBlankLineBreaks = (markdown: string): string => {
+export const prepareMarkdownWithBlankLineBreaks = (
+  markdown: string,
+): string => {
   const fenceRe = /```[^\n]*\n[\s\S]*?```|~~~[^\n]*\n[\s\S]*?~~~/g
   const parts: string[] = []
   let lastIndex = 0
@@ -44,9 +46,7 @@ export const prepareMarkdownWithBlankLineBreaks = (markdown: string): string => 
   }
 
   if (lastIndex < markdown.length) {
-    parts.push(
-      markdown.slice(lastIndex).replace(/\n(?=\n)/g, '\n\n<br/>\n'),
-    )
+    parts.push(markdown.slice(lastIndex).replace(/\n(?=\n)/g, '\n\n<br/>\n'))
   }
 
   return parts.join('')

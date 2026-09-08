@@ -236,6 +236,34 @@ const API = {
   syncCompanyToTempo: async (companyId: string): Promise<TempoSyncResult> => {
     return await ipcRenderer.invoke('syncCompanyToTempo', companyId)
   },
+  searchJiraIssues: async (
+    companyId: string,
+    query: JiraIssueSearchQuery,
+  ): Promise<JiraIssueSearchResult> => {
+    return await ipcRenderer.invoke('searchJiraIssues', companyId, query)
+  },
+  getJiraIssueFilters: async (
+    companyId: string,
+    projectKey?: string,
+  ): Promise<JiraIssueFiltersResult> => {
+    return await ipcRenderer.invoke(
+      'getJiraIssueFilters',
+      companyId,
+      projectKey,
+    )
+  },
+  searchJiraUsers: async (
+    companyId: string,
+    query: string,
+  ): Promise<JiraUserSearchResult> => {
+    return await ipcRenderer.invoke('searchJiraUsers', companyId, query)
+  },
+  openJiraIssue: async (
+    companyId: string,
+    issueKey: string,
+  ): Promise<OpenJiraIssueResult> => {
+    return await ipcRenderer.invoke('openJiraIssue', companyId, issueKey)
+  },
 
   // Events
   on: (channel: string, callback: (data: unknown) => void) => {

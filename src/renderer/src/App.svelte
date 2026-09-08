@@ -1,13 +1,21 @@
 <script lang="ts">
-  import { selectedPanel, activeTasks, companies } from './stores'
+  import { selectedPanel, activeTasks, companies, issuePicker } from './stores'
   import Navigation from './components/Navigation.svelte'
   import Overview from './components/Overview.svelte'
   import Search from './components/Search.svelte'
   import PDFExport from './components/PDFExport.svelte'
+  import IssuePickerModal from './components/modals/IssuePickerModal.svelte'
   import { onMount } from 'svelte'
 
   let loadError: string | null = $state(null)
   let appReady: boolean = $state(false)
+  let searchVisited = $state(false)
+
+  $effect(() => {
+    if ($selectedPanel === 'Search') {
+      searchVisited = true
+    }
+  })
 
   async function loadInitialData() {
     try {
@@ -71,13 +79,25 @@
     {/if}
 
     <div class="w-full p-4">
-      {#if $selectedPanel === 'Overview'}
+      <div hidden={$selectedPanel !== 'Overview'}>
         <Overview />
-      {:else if $selectedPanel === 'Search'}
-        <Search />
-      {:else if $selectedPanel === 'PDFDocument'}
+      </div>
+      {#if searchVisited}
+        <div hidden={$selectedPanel !== 'Search'}>
+          <Search />
+        </div>
+      {/if}
+      {#if $selectedPanel === 'PDFDocument'}
         <PDFExport />
       {/if}
     </div>
   {/if}
 </div>
+
+{#if $issuePicker}
+  <IssuePickerModal
+    companyId={$issuePicker.companyId}
+    onSelect={$issuePicker.onSelect}
+    onClose={() => issuePicker.set(null)}
+  />
+{/if}

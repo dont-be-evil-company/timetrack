@@ -1,7 +1,7 @@
 import logger from 'node-color-log'
 import path from 'node:path'
 import { access, readFile, stat } from 'node:fs/promises'
-import yaml from 'js-yaml'
+import { load as yamlLoader } from 'js-yaml'
 import { getUserDataDir } from './ConfigFile'
 
 export type TempoEdition = 'cloud' | 'datacenter'
@@ -161,7 +161,7 @@ export const getSyncConfig = async (): Promise<TempoConnection[]> => {
 
   try {
     const content = await readFile(syncFilePath, 'utf8')
-    const parsed = yaml.load(content) as SyncConfigFile | null
+    const parsed = yamlLoader(content) as SyncConfigFile | null
     if (!parsed || typeof parsed !== 'object') {
       return []
     }

@@ -379,7 +379,7 @@
       projectName: task.projectName,
       name: task.name,
       date: task.date,
-      description: task.descriptionHTML,
+      description: task.descriptionHTML ?? task.description ?? '',
       seconds: task.seconds,
     }))
 
@@ -412,12 +412,14 @@
     showDeleteProjectModal = false
     if (success && searchResult) {
       if (editedProject && projectToEdit) {
+        const editedId = projectToEdit.id
         searchResult.projects = searchResult.projects.map(p =>
-          p.id === projectToEdit.id ? editedProject : p,
+          p.id === editedId ? editedProject : p,
         )
       } else if (projectToDelete) {
+        const deletedId = projectToDelete.id
         searchResult.projects = searchResult.projects.filter(
-          p => p.id !== projectToDelete.id,
+          p => p.id !== deletedId,
         )
       }
       searchResults.set(searchResult)
@@ -431,13 +433,13 @@
     showDeleteTaskModal = false
     if (success && searchResult) {
       if (editedTask && taskToEdit) {
+        const editedId = taskToEdit.id
         searchResult.tasks = searchResult.tasks.map(t =>
-          t.id === taskToEdit.id ? editedTask : t,
+          t.id === editedId ? editedTask : t,
         )
       } else if (taskToDelete) {
-        searchResult.tasks = searchResult.tasks.filter(
-          t => t.id !== taskToDelete.id,
-        )
+        const deletedId = taskToDelete.id
+        searchResult.tasks = searchResult.tasks.filter(t => t.id !== deletedId)
       }
       searchResults.set(searchResult)
     }
@@ -453,12 +455,14 @@
     showDeleteTaskDefModal = false
     if (success && searchResult) {
       if (editedTaskDef && taskDefToEdit) {
+        const editedId = taskDefToEdit.id
         searchResult.task_definitions = searchResult.task_definitions.map(td =>
-          td.id === taskDefToEdit.id ? editedTaskDef : td,
+          td.id === editedId ? editedTaskDef : td,
         )
       } else if (taskDefToDelete) {
+        const deletedId = taskDefToDelete.id
         searchResult.task_definitions = searchResult.task_definitions.filter(
-          td => td.id !== taskDefToDelete.id,
+          td => td.id !== deletedId,
         )
       }
       searchResults.set(searchResult)
@@ -475,12 +479,14 @@
     showDeleteCompanyModal = false
     if (success && searchResult) {
       if (editedCompany && companyToEdit) {
+        const editedId = companyToEdit.id
         searchResult.companies = searchResult.companies.map(c =>
-          c.id === companyToEdit.id ? editedCompany : c,
+          c.id === editedId ? editedCompany : c,
         )
       } else if (companyToDelete) {
+        const deletedId = companyToDelete.id
         searchResult.companies = searchResult.companies.filter(
-          c => c.id !== companyToDelete.id,
+          c => c.id !== deletedId,
         )
       }
       searchResults.set(searchResult)
@@ -493,36 +499,40 @@
 {#if showEditCompanyModal && companyToEdit}
   <EditCompanyModal
     company={companyToEdit}
-    onClose={(s, c) => handleCompanyModalClose(s, c)}
+    onSuccess={c => handleCompanyModalClose(true, c)}
+    onClose={() => handleCompanyModalClose(false)}
   />
 {/if}
 
 {#if showDeleteCompanyModal && companyToDelete}
   <DeleteCompanyModal
     company={companyToDelete}
-    onClose={s => handleCompanyModalClose(s)}
+    onSuccess={() => handleCompanyModalClose(true)}
+    onClose={() => handleCompanyModalClose(false)}
   />
 {/if}
 
 {#if showEditProjectModal && projectToEdit}
   <EditProjectModal
     project={projectToEdit}
-    onClose={(s, p) => handleProjectModalClose(s, p)}
+    onSuccess={p => handleProjectModalClose(true, p)}
+    onClose={() => handleProjectModalClose(false)}
   />
 {/if}
 
 {#if showDeleteProjectModal && projectToDelete}
   <DeleteProjectModal
     project={projectToDelete}
-    onClose={s => handleProjectModalClose(s)}
+    onSuccess={() => handleProjectModalClose(true)}
+    onClose={() => handleProjectModalClose(false)}
   />
 {/if}
 
 {#if showEditTaskModal && taskToEdit}
   <EditTaskModal
     task={taskToEdit}
-    onSuccess={(s, t) => handleTaskModalClose(s, t)}
-    onClose={(s, t) => handleTaskModalClose(s, t)}
+    onSuccess={t => handleTaskModalClose(true, t)}
+    onClose={() => handleTaskModalClose(false)}
   />
 {/if}
 
@@ -537,14 +547,16 @@
 {#if showEditTaskDefModal && taskDefToEdit}
   <EditTaskDefinitionModal
     taskDefinition={taskDefToEdit}
-    onClose={(s, td) => handleTaskDefModalClose(s, td)}
+    onSuccess={td => handleTaskDefModalClose(true, td)}
+    onClose={() => handleTaskDefModalClose(false)}
   />
 {/if}
 
 {#if showDeleteTaskDefModal && taskDefToDelete}
   <DeleteTaskDefinitionModal
     taskDefinition={taskDefToDelete}
-    onClose={s => handleTaskDefModalClose(s)}
+    onSuccess={() => handleTaskDefModalClose(true)}
+    onClose={() => handleTaskDefModalClose(false)}
   />
 {/if}
 

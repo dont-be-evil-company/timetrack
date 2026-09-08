@@ -4,43 +4,43 @@
     onClose: () => void
   }>()
 
-  const statusFilters: {
-    status: TempoSyncItemStatus
-    count: number
-    label: string
-    badgeClass: string
-  }[] = [
+  const statusFilters = $derived([
     {
-      status: 'created',
+      status: 'created' as const,
       count: result.created,
       label: 'created',
       badgeClass: 'badge-success',
     },
     {
-      status: 'updated',
+      status: 'updated' as const,
       count: result.updated,
       label: 'updated',
       badgeClass: 'badge-info',
     },
     {
-      status: 'skipped',
+      status: 'skipped' as const,
       count: result.skipped,
       label: 'skipped',
       badgeClass: 'badge-ghost',
     },
     {
-      status: 'unchanged',
+      status: 'unchanged' as const,
       count: result.unchanged,
       label: 'unchanged',
       badgeClass: 'badge-ghost',
     },
     {
-      status: 'failed',
+      status: 'failed' as const,
       count: result.failed,
       label: 'failed',
       badgeClass: 'badge-error',
     },
-  ]
+  ] satisfies {
+    status: TempoSyncItemStatus
+    count: number
+    label: string
+    badgeClass: string
+  }[])
 
   let visible = $state<Record<TempoSyncItemStatus, boolean>>({
     created: true,
@@ -51,7 +51,7 @@
   })
 
   const visibleItems = $derived(
-    result.items.filter(item => visible[item.status]),
+    result.items.filter((item: TempoSyncItemResult) => visible[item.status]),
   )
 
   const statusLabel = (status: TempoSyncItemStatus) => {
@@ -107,7 +107,9 @@
             ? ''
             : 'badge-outline opacity-40'}"
           aria-pressed={visible[filter.status]}
-          aria-label="{visible[filter.status] ? 'Hide' : 'Show'} {filter.label} entries"
+          aria-label="{visible[filter.status]
+            ? 'Hide'
+            : 'Show'} {filter.label} entries"
           onclick={() => toggleStatus(filter.status)}
         >
           {filter.count}

@@ -2,7 +2,7 @@ import os from 'node:os'
 import logger from 'node-color-log'
 import path from 'node:path'
 import { access, mkdir, readFile } from 'node:fs/promises'
-import yaml from 'js-yaml'
+import { load as yamlLoader } from 'js-yaml'
 
 export type UserConfigFile = null | {
   /**
@@ -94,7 +94,7 @@ export const getUserConfig = async (): Promise<UserConfigFile> => {
   try {
     await access(configFilePath)
     const content = await readFile(configFilePath, 'utf8')
-    const config = yaml.load(content) as UserConfigFile
+    const config = yamlLoader(content) as UserConfigFile
     logger.warn('User config loaded ✨', config)
     return config
   } catch (error) {

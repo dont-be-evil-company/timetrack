@@ -88,7 +88,7 @@ export const requireOk = (status: number, body: unknown, action: string) => {
   )
 }
 
-const jiraHeaders = (connection: TempoConnection): HeadersInit => {
+export const jiraHeaders = (connection: TempoConnection): HeadersInit => {
   if (connection.edition === 'cloud') {
     return {
       Authorization: basicAuth(connection.jiraEmail, connection.jiraApiToken),

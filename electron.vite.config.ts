@@ -1,37 +1,12 @@
-import tsconfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'electron-vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { defineConfig } from 'electron-vite'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-  main: {
-    build: {
-      externalizeDeps: true,
-      rollupOptions: {
-        input: {
-          index: 'src/main/index.ts',
-        },
-      },
-    },
-  },
-  preload: {
-    build: {
-      externalizeDeps: true,
-      rollupOptions: {
-        input: {
-          index: 'src/preload/index.ts',
-        },
-      },
-    },
-  },
+  main: {},
+  preload: {},
   renderer: {
-    build: {
-      rollupOptions: {
-        input: {
-          index: 'src/renderer/index.html',
-        },
-      },
-    },
-    plugins: [tsconfigPaths(), tailwindcss(), svelte()],
+    plugins: [tailwindcss(), svelte(), tsconfigPaths()],
   },
 })

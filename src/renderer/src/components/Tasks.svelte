@@ -145,20 +145,20 @@
   }
 
   async function handleEditModalClose(editedTask: DBTask) {
-    // Refresh tasks list to reflect changes (especially if date changed)
-    await fetchTasks($selectedProject.id)
+    const projectId = $selectedProject?.id
+    if (projectId) {
+      await fetchTasks(projectId)
+    }
 
-    // If date changed, clear selection since task is no longer in today's list
-    if (editedTask && editedTask.date !== $selectedTask.date) {
+    if (editedTask && editedTask.date !== $selectedTask?.date) {
       selectedTask.set(null)
     } else if (editedTask) {
-      // Update selected task if it was the one edited
       selectedTask.set(editedTask)
     }
   }
 </script>
 
-{#if modalType === 'addTaskDefinition'}
+{#if modalType === 'addTaskDefinition' && $selectedProject}
   <AddTaskDefinitionModal
     project={$selectedProject}
     onClose={() => (modalType = null)}
@@ -171,7 +171,7 @@
   />
 {/if}
 
-{#if modalType === 'editTask'}
+{#if modalType === 'editTask' && $selectedTask}
   <EditTaskModal
     task={$selectedTask}
     onClose={() => (modalType = null)}
@@ -196,7 +196,7 @@
   />
 {/if}
 
-{#if modalType === 'editTaskDefinition'}
+{#if modalType === 'editTaskDefinition' && $selectedTaskDefinition}
   <EditTaskDefinitionModal
     taskDefinition={$selectedTaskDefinition}
     onClose={() => (modalType = null)}
@@ -209,7 +209,7 @@
   />
 {/if}
 
-{#if modalType === 'deleteTaskDefinition'}
+{#if modalType === 'deleteTaskDefinition' && $selectedTaskDefinition}
   <DeleteTaskDefintion
     taskDefinition={$selectedTaskDefinition}
     onClose={() => (modalType = null)}
@@ -217,7 +217,8 @@
       modalType = null
       selectedTaskDefinition.set(null)
       selectedTask.set(null)
-      await fetchTaskDefinitions($selectedProject.id)
+      const projectId = $selectedProject?.id
+      if (projectId) await fetchTaskDefinitions(projectId)
     }}
   />
 {/if}

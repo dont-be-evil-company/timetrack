@@ -60,8 +60,13 @@ import {
 } from '../database'
 import { getTempoConnectionNames } from '../lib/SyncConfig'
 import { syncCompanyToTempo } from '../lib/tempo/sync'
+import {
+  getCompanyJiraIssueBrowseUrl,
+  getCompanyJiraIssueFilters,
+  searchCompanyJiraIssues,
+  searchCompanyJiraUsers,
+} from '../lib/tempo/issues'
 import { mimeTypeFromFilename } from '../lib/mime'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { company, project, task, taskDefinition } from '../db/schema'
 import { eq } from 'drizzle-orm'
 
@@ -70,7 +75,7 @@ const openExternalPath = async (filePath: string): Promise<void> => {
   await open(filePath)
 }
 
-let DB: ReturnType<typeof drizzle>
+let DB: Awaited<ReturnType<typeof getDatabase>>
 let WINDOW: BrowserWindow
 const activeTasks: InstanceType<typeof CountUp>[] = []
 let handlersInitialized = false
@@ -636,6 +641,56 @@ export const initIpcHandlers = async (
     async (_, companyId: string): Promise<TempoSyncResult> => {
       const activeTaskIds = new Set(activeTasks.map(t => t.taskId))
       return syncCompanyToTempo(DB, companyId, activeTaskIds)
+    },
+  )
+  ipcMain.handle(
+    'searchJiraIssues',
+    async (
+      _,
+      companyId: string,
+      query: JiraIssueSearchQuery,
+    ): Promise<JiraIssueSearchResult> =>
+      searchCompanyJiraIssues(DB, companyId, query ?? {}),
+  )
+  ipcMain.handle(
+    'getJiraIssueFilters',
+    async (
+      _,
+      companyId: string,
+      projectKey?: string,
+    ): Promise<JiraIssueFiltersResult> =>
+      getCompanyJiraIssueFilters(DB, companyId, projectKey),
+  )
+  ipcMain.handle(
+    'searchJiraUsers',
+    async (
+      _,
+      companyId: string,
+      query: string,
+    ): Promise<JiraUserSearchResult> =>
+      searchCompanyJiraUsers(DB, companyId, query ?? ''),
+  )
+  ipcMain.handle(
+    'openJiraIssue',
+    async (
+      _,
+      companyId: string,
+      issueKey: string,
+    ): Promise<OpenJiraIssueResult> => {
+      const result = await getCompanyJiraIssueBrowseUrl(DB, companyId, issueKey)
+      if (!result.success) return result
+      try {
+        await shell.openExternal(result.url)
+        return { success: true }
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to open the issue in the browser',
+        }
+      }
     },
   )
 

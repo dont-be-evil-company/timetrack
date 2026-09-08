@@ -18,7 +18,7 @@
       if (result.success) {
         companies.update(cs => cs.filter(c => c.id !== company.id))
         // Clear selection if deleted company was selected
-        if ($selectedCompany.id === company.id) {
+        if ($selectedCompany?.id === company.id) {
           selectedCompany.set(null)
           selectedProject.set(null)
         }

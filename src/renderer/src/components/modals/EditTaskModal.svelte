@@ -5,7 +5,7 @@
     onSuccess: (editedTask: DBTask) => void
   }>()
 
-  import { onMount } from 'svelte'
+  import { onMount, untrack } from 'svelte'
   import { activeTasks } from '../../stores'
   import InfoBox from '../InfoBox.svelte'
   import PreviewAttachmentModal from './PreviewAttachmentModal.svelte'
@@ -14,10 +14,11 @@
     isPreviewableMimeType,
   } from '../../lib/attachmentPreview'
   import { Pencil, Trash2, Download, Paperclip, Eye } from '@lucide/svelte'
+  import IssueKeyField from '../IssueKeyField.svelte'
 
   let description = $derived(task.description)
   let status = $derived(task.status)
-  let issueKey = $state(task.issueKey || '')
+  let issueKey = $state(untrack(() => task.issueKey || ''))
 
   const parseDateTime = (
     value?: string,
@@ -46,8 +47,10 @@
     }
   }
 
-  const startParsed = parseDateTime(task.startDateTime)
-  const endParsed = parseDateTime(task.endDateTime ?? task.startDateTime)
+  const startParsed = parseDateTime(untrack(() => task.startDateTime))
+  const endParsed = parseDateTime(
+    untrack(() => task.endDateTime ?? task.startDateTime),
+  )
 
   let startDate = $state(startParsed.date)
   let startHour = $state(startParsed.hour)
@@ -88,7 +91,7 @@
 
   $effect(() => {
     activeTask = $activeTasks.find(at => at.taskId === task.id)
-    isActive = activeTask !== undefined && activeTask.isActive
+    isActive = Boolean(activeTask?.isActive)
   })
 
   async function handleSubmit(e: Event) {
@@ -241,30 +244,18 @@
           rows="5"
           placeholder="Task Description"></textarea>
       </div>
-      <div class="form-control mt-4">
-        <label class="label" for="issueKey">
-          <span class="label-text">Issue key</span>
-          <span
-            class="tooltip"
-            data-tip="Optional. Used when syncing to Tempo, e.g. PROJ-42"
-          >
-            *</span
-          >
-        </label>
-        <input
-          id="issueKey"
-          type="text"
-          bind:value={issueKey}
-          class="input input-bordered"
-          placeholder="PROJ-42"
-        />
-      </div>
+      <IssueKeyField
+        bind:value={issueKey}
+        tooltip="Optional. Used when syncing to Tempo, e.g. PROJ-42"
+        companyId={task.companyId}
+      />
       <div class="form-control mt-4 {isActive ? 'hidden' : ''}">
-        <label class="label">
+        <label class="label" for="startDate">
           <span class="label-text">Start time</span>
         </label>
         <div class="grid grid-cols-3 gap-2">
           <input
+            id="startDate"
             type="date"
             bind:value={startDate}
             class="input input-bordered"
@@ -289,11 +280,12 @@
         </div>
       </div>
       <div class="form-control mt-4 {isActive ? 'hidden' : ''}">
-        <label class="label">
+        <label class="label" for="endDate">
           <span class="label-text">End time</span>
         </label>
         <div class="grid grid-cols-3 gap-2">
           <input
+            id="endDate"
             type="date"
             bind:value={endDate}
             class="input input-bordered"

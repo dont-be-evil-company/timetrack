@@ -51,35 +51,38 @@
   }
 </script>
 
-{#if modalType === 'add'}
+{#if modalType === 'add' && $selectedCompany}
   <AddProjectModal
     company={$selectedCompany}
     onSuccess={async () => {
       modalType = null
-      await fetchProjects($selectedCompany.id || undefined)
+      const companyId = $selectedCompany?.id
+      if (companyId) await fetchProjects(companyId)
     }}
     onClose={() => (modalType = null)}
   />
 {/if}
 
-{#if modalType === 'edit'}
+{#if modalType === 'edit' && $selectedProject}
   <EditProjectModal
     onSuccess={async () => {
       modalType = null
-      await fetchProjects($selectedCompany.id || undefined)
+      const companyId = $selectedCompany?.id
+      if (companyId) await fetchProjects(companyId)
     }}
     project={$selectedProject}
     onClose={() => (modalType = null)}
   />
 {/if}
 
-{#if modalType === 'delete'}
+{#if modalType === 'delete' && $selectedProject}
   <DeleteProjectModal
     project={$selectedProject}
     onSuccess={async () => {
       modalType = null
-      $selectedProject = null
-      await fetchProjects($selectedCompany.id || undefined)
+      selectedProject.set(null)
+      const companyId = $selectedCompany?.id
+      if (companyId) await fetchProjects(companyId)
     }}
     onClose={() => (modalType = null)}
   />

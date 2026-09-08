@@ -4,17 +4,19 @@
     onSuccess: (editTaskDefinition: DBTaskDefinition) => void
     onClose: () => void
   }>()
+  import { untrack } from 'svelte'
   import {
     selectedTask,
     selectedTaskDefinition,
     taskDefinitions,
   } from '../../stores'
+  import IssueKeyField from '../IssueKeyField.svelte'
 
   let taskDefName = $derived(taskDefinition && taskDefinition.name)
   let status: 'active' | 'inactive' = $derived(
     taskDefinition && taskDefinition.status,
   )
-  let issueKey = $state(taskDefinition.issueKey || '')
+  let issueKey = $state(untrack(() => taskDefinition.issueKey || ''))
 
   async function handleSubmit(e: Event) {
     e.preventDefault()
@@ -70,18 +72,11 @@
           required
         />
       </div>
-      <div class="form-control mt-4">
-        <label class="label" for="issueKey">
-          <span class="label-text">Default issue key</span>
-        </label>
-        <input
-          id="issueKey"
-          type="text"
-          bind:value={issueKey}
-          class="input input-bordered"
-          placeholder="PROJ-42"
-        />
-      </div>
+      <IssueKeyField
+        bind:value={issueKey}
+        label="Default issue key"
+        companyId={taskDefinition.companyId}
+      />
       <div class="form-control mt-4">
         <label class="label" for="status">
           <span class="label-text">Status</span>

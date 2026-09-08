@@ -70,7 +70,7 @@
     await fetchCompanies()
     if (companyToDelete) {
       // Clear selection if deleted company was selected
-      if ($selectedCompany.id === companyToDelete.id) {
+      if ($selectedCompany?.id === companyToDelete.id) {
         selectedCompany.set(null)
         selectedProject.set(null)
       }

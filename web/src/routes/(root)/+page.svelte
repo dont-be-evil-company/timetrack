@@ -21,7 +21,8 @@
 	interface PrismaRegisterButtonContext {
 		element: { parentNode: HTMLElement | null };
 	}
-	const downloadBaseUrl = 'https://github.com/dont-be-evil-company/timetrack/releases/latest/download/';
+	const downloadBaseUrl =
+		'https://github.com/dont-be-evil-company/timetrack/releases/latest/download/';
 
 	let downloadLink = downloadBaseUrl + 'timetrack-setup-x64.exe';
 
@@ -179,7 +180,8 @@
 						There is already a package called
 						<code class="rounded-xl bg-gray-900 p-1 text-nowrap text-white">timetrack</code>
 						in AUR, to avoid confusion, the package for this project is called
-						<code class="rounded-xl bg-gray-900 p-1 text-nowrap text-white">dbe-timetrack-bin</code>.
+						<code class="rounded-xl bg-gray-900 p-1 text-nowrap text-white">dbe-timetrack-bin</code
+						>.
 					</p>
 				</div>
 			</div>
@@ -241,7 +243,8 @@
 			</a>
 			<p class="py-6">Timetrack is open-source and we welcome contributions.</p>
 			<p>
-				View the <a class="text-secondary" href="https://github.com/dont-be-evil-company/timetrack">code</a
+				View the <a class="text-secondary" href="https://github.com/dont-be-evil-company/timetrack"
+					>code</a
 				>, and/or check out the
 				<a class="text-secondary" href="/docs">docs</a>.
 			</p>

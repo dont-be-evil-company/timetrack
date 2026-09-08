@@ -24,6 +24,12 @@ import {
   getDBFilePath,
   getUserConfig,
 } from '../lib/ConfigFile'
+import {
+  loadWindowState,
+  persistWindowState,
+  saveWindowState,
+  windowOptionsFromState,
+} from '../lib/WindowState'
 
 let TRAY: Tray | null = null
 
@@ -47,15 +53,18 @@ async function chooseDatabaseForSession(
     if (databases.length > 0) {
       const buttons = databases.map(db => db.name)
 
-      const { response } = await dialog.showMessageBox(parentWindow || null, {
-        type: 'question',
+      const dialogOptions = {
+        type: 'question' as const,
         buttons,
         title: 'Select database',
         message:
           'A configuration file with multiple databases was found.\n\nSelect the database you want to use for this session:',
         cancelId: -1,
         noLink: true,
-      })
+      }
+      const { response } = parentWindow
+        ? await dialog.showMessageBox(parentWindow, dialogOptions)
+        : await dialog.showMessageBox(dialogOptions)
 
       if (response === -1) {
         // User closed the dialog or pressed Escape
@@ -75,9 +84,11 @@ async function chooseDatabaseForSession(
 }
 
 async function createWindow(): Promise<BrowserWindow> {
+  const savedState = await loadWindowState()
   MAIN_WINDOW = new BrowserWindow({
-    width: 960,
-    height: 600,
+    ...windowOptionsFromState(savedState),
+    minWidth: 640,
+    minHeight: 400,
     show: true, // Show immediately for better UX
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -89,6 +100,12 @@ async function createWindow(): Promise<BrowserWindow> {
       webSecurity: true,
     },
   })
+
+  if (savedState.isMaximized) {
+    MAIN_WINDOW.maximize()
+  }
+
+  persistWindowState(MAIN_WINDOW)
 
   await loadWindowContents(MAIN_WINDOW, 'index.html')
 
@@ -115,6 +132,9 @@ async function createWindow(): Promise<BrowserWindow> {
 }
 
 app.on('window-all-closed', async () => {
+  if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed()) {
+    await saveWindowState(MAIN_WINDOW)
+  }
   await periodicSaveActiveTasks()
   if (process.platform !== 'darwin') {
     app.quit()
@@ -138,6 +158,7 @@ app.whenReady().then(async () => {
 
   // Minimize to tray behavior
   win.on('minimize', () => {
+    void saveWindowState(win)
     if (!TRAY) {
       TRAY = new Tray(
         nativeImage.createFromDataURL(`data:image/png;base64,${trayIcon}`),
@@ -149,7 +170,7 @@ app.whenReady().then(async () => {
         {
           label: 'Show',
           click: async () => {
-            TRAY.setContextMenu(Menu.buildFromTemplate([{ role: 'quit' }]))
+            TRAY?.setContextMenu(Menu.buildFromTemplate([{ role: 'quit' }]))
             if (!MAIN_WINDOW) {
               await createWindow()
             } else {

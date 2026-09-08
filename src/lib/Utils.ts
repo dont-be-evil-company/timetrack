@@ -28,9 +28,7 @@ const removeActiveClassnameGeneric = (
   const root = document.querySelector(rootQuery)
   if (root) {
     const items = root.querySelectorAll(itemsQuery)
-    if (items) {
-      items.forEach((n: HTMLDivElement) => n.classList.remove('is-active'))
-    }
+    items.forEach(n => n.classList.remove('is-active'))
   }
 }
 

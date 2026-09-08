@@ -107,6 +107,7 @@ type DBTaskDefinition = {
   name: string
   projectId: string
   projectName: string
+  companyId?: string
   status?: string
   statusId?: number
   issueKey?: string | null
@@ -117,6 +118,7 @@ type DBTask = {
   name: string
   taskDefinitionId: string
   projectName: string
+  companyId?: string
   companyName: string
   description: string
   seconds: number
@@ -200,11 +202,7 @@ type DBDeleteTaskOpts = {
 }
 
 type TempoSyncItemStatus =
-  | 'created'
-  | 'updated'
-  | 'skipped'
-  | 'unchanged'
-  | 'failed'
+  'created' | 'updated' | 'skipped' | 'unchanged' | 'failed'
 
 type TempoSyncItemResult = {
   taskId: string
@@ -223,6 +221,72 @@ type TempoSyncResult = {
   unchanged: number
   failed: number
   items: TempoSyncItemResult[]
+}
+
+type JiraIssueSearchQuery = {
+  text?: string
+  projectKey?: string
+  statusName?: string
+  statusId?: string
+  assignee?: string
+  assigneeDisplayName?: string
+  nextPageToken?: string
+  startAt?: number
+}
+
+type JiraIssueSearchHit = {
+  key: string
+  summary: string
+  issueTypeName: string
+  issueTypeIconUrl?: string
+  assigneeName?: string
+  reporterName?: string
+  statusName: string
+  statusCategory?: string
+  resolution?: string
+  created?: string
+}
+
+type JiraIssueSearchResult = {
+  success: boolean
+  error?: string
+  issues: JiraIssueSearchHit[]
+  nextPageToken?: string
+  startAt?: number
+  hasMore?: boolean
+}
+
+type JiraIssueProjectOption = {
+  key: string
+  name: string
+}
+
+type JiraIssueStatusOption = {
+  id: string
+  name: string
+}
+
+type JiraIssueFiltersResult = {
+  success: boolean
+  error?: string
+  projects: JiraIssueProjectOption[]
+  statuses: JiraIssueStatusOption[]
+}
+
+type JiraUserSearchHit = {
+  id: string
+  displayName: string
+}
+
+type JiraUserSearchResult = {
+  success: boolean
+  error?: string
+  users: JiraUserSearchHit[]
+}
+
+type OpenJiraIssueResult = {
+  success: boolean
+  error?: string
 }
 
 type DBTaskAttachment = {
@@ -299,7 +363,7 @@ interface Window {
     ) => Promise<DBProject | null>
     getProjects: (
       companyId?: string,
-      statusName: string,
+      statusName?: string,
     ) => Promise<DBProject[]>
     addTaskDefinition: (opts: DBAddTaskDefinitionOpts) => Promise<{
       success: boolean
@@ -379,5 +443,21 @@ interface Window {
     ) => Promise<{ success: boolean; canceled?: boolean; filePath?: string }>
     getTempoConnections: () => Promise<string[]>
     syncCompanyToTempo: (companyId: string) => Promise<TempoSyncResult>
+    searchJiraIssues: (
+      companyId: string,
+      query: JiraIssueSearchQuery,
+    ) => Promise<JiraIssueSearchResult>
+    getJiraIssueFilters: (
+      companyId: string,
+      projectKey?: string,
+    ) => Promise<JiraIssueFiltersResult>
+    searchJiraUsers: (
+      companyId: string,
+      query: string,
+    ) => Promise<JiraUserSearchResult>
+    openJiraIssue: (
+      companyId: string,
+      issueKey: string,
+    ) => Promise<OpenJiraIssueResult>
   }
 }

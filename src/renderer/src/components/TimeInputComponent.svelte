@@ -67,10 +67,11 @@
 
 <div class="grid grid-cols-3 gap-4">
   <div class="form-control">
-    <label class="label">
+    <label class="label" for="task-hours">
       <span class="label-text">Hours</span>
     </label>
     <input
+      id="task-hours"
       type="number"
       bind:value={currentHours}
       min="0"
@@ -80,10 +81,11 @@
     />
   </div>
   <div class="form-control">
-    <label class="label">
+    <label class="label" for="task-minutes">
       <span class="label-text">Minutes</span>
     </label>
     <input
+      id="task-minutes"
       type="number"
       bind:value={currentMinutes}
       min="0"
@@ -94,10 +96,11 @@
     />
   </div>
   <div class="form-control">
-    <label class="label">
+    <label class="label" for="task-seconds">
       <span class="label-text">Seconds</span>
     </label>
     <input
+      id="task-seconds"
       type="number"
       bind:value={currentSeconds}
       min="0"
@@ -130,10 +133,11 @@
       </div>
       <div class="grid grid-cols-3 gap-4 mt-2">
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="add-hours">
             <span class="label-text">Add Hours</span>
           </label>
           <input
+            id="add-hours"
             type="number"
             bind:value={addUpHours}
             min="0"
@@ -141,10 +145,11 @@
           />
         </div>
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="add-minutes">
             <span class="label-text">Add Minutes</span>
           </label>
           <input
+            id="add-minutes"
             type="number"
             bind:value={addUpMinutes}
             min="0"
@@ -153,10 +158,11 @@
           />
         </div>
         <div class="form-control">
-          <label class="label">
+          <label class="label" for="add-seconds">
             <span class="label-text">Add Seconds</span>
           </label>
           <input
+            id="add-seconds"
             type="number"
             bind:value={addUpSeconds}
             min="0"

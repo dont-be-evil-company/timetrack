@@ -4,7 +4,7 @@
     onClose: () => void
     onSuccess: (company: DBCompany) => void
   }>()
-  import { onMount } from 'svelte'
+  import { onMount, untrack } from 'svelte'
   import {
     companies,
     selectedCompany,
@@ -15,7 +15,7 @@
 
   let name = $derived(company.name)
   let status = $derived(company.status || 'active')
-  let tempoConnection = $state(company.tempoConnection || '')
+  let tempoConnection = $state(untrack(() => company.tempoConnection || ''))
   let tempoConnections: string[] = $state([])
 
   onMount(async () => {

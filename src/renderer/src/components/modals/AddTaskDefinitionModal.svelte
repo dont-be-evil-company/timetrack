@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { selectedTaskDefinition } from '../../stores'
+  import IssueKeyField from '../IssueKeyField.svelte'
 
   let { onClose, onSuccess, project } = $props<{
     project: DBProject
@@ -51,18 +52,11 @@
           required
         />
       </div>
-      <div class="form-control mt-4">
-        <label class="label" for="issueKey">
-          <span class="label-text">Default issue key</span>
-        </label>
-        <input
-          id="issueKey"
-          type="text"
-          bind:value={issueKey}
-          class="input input-bordered"
-          placeholder="PROJ-42"
-        />
-      </div>
+      <IssueKeyField
+        bind:value={issueKey}
+        label="Default issue key"
+        companyId={project.companyId}
+      />
       <div class="modal-action">
         <button type="submit" class="btn btn-success">Add</button>
         <button type="button" class="btn" onclick={onClose}>Cancel</button>

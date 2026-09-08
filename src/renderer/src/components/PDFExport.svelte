@@ -15,11 +15,9 @@
   pdfExportShowing.subscribe(value => {
     showingPDF = value
   })
-
-  $: shouldShowPDFDocument = showingPDF && pdfData && pdfData.length > 0
 </script>
 
-{#if shouldShowPDFDocument}
+{#if showingPDF && pdfData && pdfData.length > 0}
   <PDFDocument pdfDocument={pdfData} />
 {:else if showingPDF && pdfData && pdfData.length === 0}
   <div class="alert alert-warning">

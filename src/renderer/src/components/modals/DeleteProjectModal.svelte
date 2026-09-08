@@ -11,7 +11,7 @@
     const result = await window.electron.deleteProject(project.id)
     if (result.success) {
       projects.update(ps => ps.filter(p => p.id !== project.id))
-      if ($selectedProject.id === project.id) {
+      if ($selectedProject?.id === project.id) {
         selectedProject.set(null)
       }
       onSuccess()

@@ -15,7 +15,9 @@
   function handleTopButtonClick(action: string) {
     switch (action) {
       case 'reportABug':
-        window.open('https://github.com/dont-be-evil-company/timetrack/issues/new')
+        window.open(
+          'https://github.com/dont-be-evil-company/timetrack/issues/new',
+        )
         break
       case 'seeTheCode':
         window.open('https://github.com/dont-be-evil-company/timetrack')
