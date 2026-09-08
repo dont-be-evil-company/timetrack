@@ -54,6 +54,13 @@
     result.items.filter((item: TempoSyncItemResult) => visible[item.status]),
   )
 
+  const hasForbiddenFailure = $derived(
+    result.items.some(
+      (item: TempoSyncItemResult) =>
+        item.status === 'failed' && item.httpStatus === 403,
+    ),
+  )
+
   const statusLabel = (status: TempoSyncItemStatus) => {
     switch (status) {
       case 'created':
@@ -90,11 +97,22 @@
 </script>
 
 <div class="modal modal-open">
-  <div class="modal-box max-w-2xl">
+  <div class="modal-box max-w-4xl">
     <h3 class="font-bold text-lg">Tempo sync</h3>
     {#if result.error}
       <div role="alert" class="alert alert-error mt-4">
         <span>{result.error}</span>
+      </div>
+    {/if}
+    {#if hasForbiddenFailure}
+      <div role="alert" class="alert alert-warning mt-4 text-sm">
+        <span>
+          Timetrack creates Tempo <strong>worklogs</strong>, not plans. A 403
+          here means the sync.yaml Jira/Tempo user cannot log work on that
+          project (Jira permission <em>Work on Issues</em>), even if you can
+          view the issue or add a Tempo plan in the browser. Other projects can
+          still sync.
+        </span>
       </div>
     {/if}
     <div class="mt-4 flex flex-wrap gap-2 text-sm">
@@ -118,7 +136,7 @@
       {/each}
     </div>
     {#if result.items.length > 0}
-      <div class="mt-4 max-h-80 overflow-y-auto">
+      <div class="mt-4 max-h-96 overflow-y-auto">
         {#if visibleItems.length > 0}
           <table class="table table-sm">
             <thead>
@@ -135,13 +153,32 @@
                   <td>{item.taskName}</td>
                   <td>{item.issueKey || '-'}</td>
                   <td>
-                    <span class="badge {statusClass(item.status)}"
-                      >{statusLabel(item.status)}</span
-                    >
+                    <span class="badge {statusClass(item.status)}">
+                      {statusLabel(item.status)}{item.httpStatus
+                        ? ` ${item.httpStatus}`
+                        : ''}
+                    </span>
                   </td>
-                  <td class="text-sm text-base-content/70"
-                    >{item.message || ''}</td
-                  >
+                  <td class="max-w-md">
+                    <div
+                      class="text-sm whitespace-pre-wrap break-words {item.status ===
+                      'failed'
+                        ? 'text-error'
+                        : 'text-base-content/70'}"
+                    >
+                      {item.message || ''}
+                    </div>
+                    {#if item.detail}
+                      <details class="mt-1">
+                        <summary
+                          class="cursor-pointer text-xs text-base-content/50"
+                          >Response</summary
+                        >
+                        <pre
+                          class="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all text-xs text-base-content/60">{item.detail}</pre>
+                      </details>
+                    {/if}
+                  </td>
                 </tr>
               {/each}
             </tbody>

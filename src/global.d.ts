@@ -210,6 +210,8 @@ type TempoSyncItemResult = {
   issueKey?: string
   status: TempoSyncItemStatus
   message?: string
+  httpStatus?: number
+  detail?: string
 }
 
 type TempoSyncResult = {

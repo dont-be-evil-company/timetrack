@@ -93,9 +93,13 @@
       syncResult = await window.electron.syncCompanyToTempo($selectedCompany.id)
     } catch (error) {
       console.error('Error syncing to Tempo:', error)
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : 'Failed to sync to Tempo'
       syncResult = {
         success: false,
-        error: 'Failed to sync to Tempo',
+        error: message,
         created: 0,
         updated: 0,
         skipped: 0,

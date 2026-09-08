@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import logger from 'node-color-log'
 import {
   getCompanyById,
   getTaskExternalSync,
@@ -6,7 +7,7 @@ import {
   upsertTaskExternalSync,
 } from '../../database'
 import { getTempoConnection } from '../SyncConfig'
-import { createTempoClient, TempoApiError } from './client'
+import { createTempoClient, TempoApiError, tempoApiErrorDetail } from './client'
 
 type AppDb = Parameters<typeof getCompanyById>[0]
 
@@ -19,6 +20,22 @@ export const taskContentHash = (
   createHash('sha256')
     .update([issueKey, startDateTime, endDateTime, description].join('\0'))
     .digest('hex')
+
+const formatSyncFailure = (
+  error: unknown,
+): Pick<TempoSyncItemResult, 'message' | 'httpStatus' | 'detail'> => {
+  if (error instanceof TempoApiError) {
+    return {
+      message: error.message,
+      httpStatus: error.status,
+      detail: tempoApiErrorDetail(error),
+    }
+  }
+  if (error instanceof Error && error.message.trim()) {
+    return { message: error.message }
+  }
+  return { message: 'Unknown error' }
+}
 
 const countsFromItems = (
   items: TempoSyncItemResult[],
@@ -209,18 +226,17 @@ export const syncCompanyToTempo = async (
         })
       }
     } catch (error) {
-      const message =
-        error instanceof TempoApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error'
+      const failure = formatSyncFailure(error)
+      logger.error(
+        `Tempo sync failed for task ${task.id} (${issueKey}): ${failure.message}`,
+      )
+      if (failure.detail) logger.error(failure.detail)
       items.push({
         taskId: task.id,
         taskName: task.name,
         issueKey,
         status: 'failed',
-        message,
+        ...failure,
       })
       if (error instanceof TempoApiError && error.status === 401) {
         break

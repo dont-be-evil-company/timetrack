@@ -215,12 +215,13 @@ export const searchJiraIssues = async (
     if (query.nextPageToken?.trim()) {
       body.nextPageToken = query.nextPageToken.trim()
     }
-    const { status, body: responseBody } = await requestJson(
-      jiraUrl(connection, '/search/jql'),
-      { method: 'POST', headers, body: JSON.stringify(body) },
-    )
-    requireOk(status, responseBody, 'Searching Jira issues')
-    const record = asRecord(responseBody)
+    const response = await requestJson(jiraUrl(connection, '/search/jql'), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    })
+    requireOk(response, 'Searching Jira issues')
+    const record = asRecord(response.body)
     const issues = Array.isArray(record?.issues)
       ? record.issues
           .map(parseIssue)
@@ -239,21 +240,18 @@ export const searchJiraIssues = async (
   const startAt = Number.isFinite(query.startAt)
     ? Math.max(0, Number(query.startAt))
     : 0
-  const { status, body: responseBody } = await requestJson(
-    jiraUrl(connection, '/search'),
-    {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        jql,
-        startAt,
-        maxResults: MAX_RESULTS,
-        fields: [...ISSUE_FIELDS],
-      }),
-    },
-  )
-  requireOk(status, responseBody, 'Searching Jira issues')
-  const record = asRecord(responseBody)
+  const response = await requestJson(jiraUrl(connection, '/search'), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      jql,
+      startAt,
+      maxResults: MAX_RESULTS,
+      fields: [...ISSUE_FIELDS],
+    }),
+  })
+  requireOk(response, 'Searching Jira issues')
+  const record = asRecord(response.body)
   const issues = Array.isArray(record?.issues)
     ? record.issues
         .map(parseIssue)
@@ -310,12 +308,12 @@ const fetchProjects = async (
     }
   }
 
-  const { status, body } = await requestJson(jiraUrl(connection, '/project'), {
+  const result = await requestJson(jiraUrl(connection, '/project'), {
     method: 'GET',
     headers,
   })
-  requireOk(status, body, 'Loading Jira projects')
-  const list = Array.isArray(body) ? body : []
+  requireOk(result, 'Loading Jira projects')
+  const list = Array.isArray(result.body) ? result.body : []
   return list
     .map(parseProject)
     .filter((project): project is JiraIssueProjectOption => project !== null)
@@ -362,12 +360,12 @@ const fetchStatuses = async (
     const projectStatuses = await fetchProjectStatuses(connection, trimmedKey)
     if (projectStatuses && projectStatuses.length > 0) return projectStatuses
   }
-  const { status, body } = await requestJson(jiraUrl(connection, '/status'), {
+  const result = await requestJson(jiraUrl(connection, '/status'), {
     method: 'GET',
     headers: jiraHeaders(connection),
   })
-  requireOk(status, body, 'Loading Jira statuses')
-  const list = Array.isArray(body) ? body : []
+  requireOk(result, 'Loading Jira statuses')
+  const list = Array.isArray(result.body) ? result.body : []
   return uniqueStatuses(list)
 }
 
@@ -412,12 +410,12 @@ export const searchJiraUsers = async (
     connection.edition === 'cloud'
       ? `/user/search?query=${encoded}&maxResults=20`
       : `/user/search?username=${encoded}&maxResults=20`
-  const { status, body } = await requestJson(jiraUrl(connection, path), {
+  const result = await requestJson(jiraUrl(connection, path), {
     method: 'GET',
     headers: jiraHeaders(connection),
   })
-  requireOk(status, body, 'Searching Jira users')
-  const list = Array.isArray(body) ? body : []
+  requireOk(result, 'Searching Jira users')
+  const list = Array.isArray(result.body) ? result.body : []
   return {
     success: true,
     users: list

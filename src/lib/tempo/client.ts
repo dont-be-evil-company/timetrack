@@ -14,13 +14,38 @@ export type TempoClient = {
   updateWorklog: (remoteId: string, input: WorklogInput) => Promise<void>
 }
 
+export type JsonResponse = {
+  status: number
+  statusText: string
+  body: unknown
+  method: string
+  url: string
+}
+
 export class TempoApiError extends Error {
   status: number
+  action?: string
+  body?: unknown
+  method?: string
+  url?: string
 
-  constructor(message: string, status: number) {
+  constructor(
+    message: string,
+    status: number,
+    options?: {
+      action?: string
+      body?: unknown
+      method?: string
+      url?: string
+    },
+  ) {
     super(message)
     this.name = 'TempoApiError'
     this.status = status
+    this.action = options?.action
+    this.body = options?.body
+    this.method = options?.method
+    this.url = options?.url
   }
 }
 
@@ -43,27 +68,122 @@ const asRecord = (value: unknown): JsonRecord | null =>
     ? (value as JsonRecord)
     : null
 
-const readErrorMessage = (body: unknown, status: number): string => {
+const uniqueStrings = (items: string[]): string[] => [...new Set(items)]
+
+const pushTrimmed = (items: string[], value: unknown) => {
+  if (typeof value !== 'string') return
+  const trimmed = value.trim()
+  if (trimmed) items.push(trimmed)
+}
+
+const collectErrorMessages = (body: unknown): string[] => {
+  const messages: string[] = []
+  if (typeof body === 'string') {
+    pushTrimmed(messages, body)
+    return uniqueStrings(messages)
+  }
+
   const record = asRecord(body)
-  if (record) {
-    const errorMessages = record.errorMessages
-    if (Array.isArray(errorMessages) && errorMessages.length > 0) {
-      return String(errorMessages[0])
+  if (!record) return messages
+
+  if (Array.isArray(record.errorMessages)) {
+    record.errorMessages.forEach(item => pushTrimmed(messages, item))
+  }
+
+  if (Array.isArray(record.errors)) {
+    for (const item of record.errors) {
+      if (typeof item === 'string') {
+        pushTrimmed(messages, item)
+        continue
+      }
+      const error = asRecord(item)
+      pushTrimmed(
+        messages,
+        error?.message ?? error?.error ?? error?.errorMessage,
+      )
     }
-    if (typeof record.message === 'string' && record.message.trim()) {
-      return record.message
-    }
-    if (typeof record.error === 'string' && record.error.trim()) {
-      return record.error
+  } else {
+    const fieldErrors = asRecord(record.errors)
+    if (fieldErrors) {
+      for (const [field, value] of Object.entries(fieldErrors)) {
+        if (typeof value === 'string' && value.trim()) {
+          messages.push(`${field}: ${value.trim()}`)
+        }
+      }
     }
   }
-  return `HTTP ${status}`
+
+  if (Array.isArray(record.reasons)) {
+    record.reasons.forEach(item => pushTrimmed(messages, item))
+  }
+
+  pushTrimmed(messages, record.message)
+  pushTrimmed(messages, record.error)
+  pushTrimmed(messages, record.errorMessage)
+
+  const nestedError = asRecord(record.error)
+  if (nestedError) {
+    pushTrimmed(messages, nestedError.message)
+    pushTrimmed(messages, nestedError.errorMessage)
+  }
+
+  return uniqueStrings(messages)
+}
+
+const isUnhelpfulMessage = (message: string, status: number): boolean => {
+  const normalized = message.replace(/^HTTP\s+/i, '').trim()
+  if (!normalized) return true
+  if (normalized === String(status)) return true
+  return /^(forbidden|unauthorized|access denied|error)$/i.test(normalized)
+}
+
+const serializeErrorBody = (body: unknown): string | null => {
+  if (body === null || body === undefined) return null
+  try {
+    const text = typeof body === 'string' ? body : JSON.stringify(body, null, 2)
+    const trimmed = text.trim()
+    if (
+      !trimmed ||
+      trimmed === '{}' ||
+      trimmed === 'null' ||
+      trimmed === '[]'
+    ) {
+      return null
+    }
+    return trimmed.length > 800 ? `${trimmed.slice(0, 800)}...` : trimmed
+  } catch {
+    return null
+  }
+}
+
+const readErrorMessage = (body: unknown, status: number): string =>
+  collectErrorMessages(body)
+    .filter(message => !isUnhelpfulMessage(message, status))
+    .join('; ')
+
+const responseContext = (result: JsonResponse) => ({
+  body: result.body,
+  method: result.method,
+  url: result.url,
+})
+
+export const tempoApiErrorDetail = (
+  error: TempoApiError,
+): string | undefined => {
+  const lines: string[] = []
+  if (error.method && error.url) {
+    lines.push(`${error.method} ${error.url}`)
+  }
+  const dump = serializeErrorBody(error.body)
+  if (dump) lines.push(dump)
+  return lines.length > 0 ? lines.join('\n') : undefined
 }
 
 export const requestJson = async (
   url: string,
   init: RequestInit,
-): Promise<{ status: number; body: unknown }> => {
+): Promise<JsonResponse> => {
+  const method = (init.method ?? 'GET').toUpperCase()
   const response = await fetch(url, {
     ...init,
     signal: init.signal ?? AbortSignal.timeout(30_000),
@@ -74,17 +194,29 @@ export const requestJson = async (
     try {
       body = JSON.parse(text)
     } catch {
-      body = { message: text.slice(0, 200) }
+      body = { message: text.slice(0, 500) }
     }
   }
-  return { status: response.status, body }
+  return {
+    status: response.status,
+    statusText: response.statusText,
+    body,
+    method,
+    url,
+  }
 }
 
-export const requireOk = (status: number, body: unknown, action: string) => {
-  if (status >= 200 && status < 300) return
+export const requireOk = (result: JsonResponse, action: string) => {
+  if (result.status >= 200 && result.status < 300) return
+  const httpLabel = result.statusText?.trim()
+    ? `HTTP ${result.status} ${result.statusText.trim()}`
+    : `HTTP ${result.status}`
+  const detail = readErrorMessage(result.body, result.status)
+  const suffix = detail ? `: ${detail}` : ''
   throw new TempoApiError(
-    `${action} failed: ${readErrorMessage(body, status)}`,
-    status,
+    `${action} failed (${httpLabel})${suffix}`,
+    result.status,
+    { action, ...responseContext(result) },
   )
 }
 
@@ -111,15 +243,19 @@ export const resolveJiraIssueId = async (
   const url = `${connection.jiraBaseUrl}/rest/api/${apiVersion}/issue/${encodeURIComponent(
     issueKey,
   )}?fields=id`
-  const { status, body } = await requestJson(url, {
+  const result = await requestJson(url, {
     method: 'GET',
     headers: jiraHeaders(connection),
   })
-  requireOk(status, body, `Looking up issue ${issueKey}`)
-  const record = asRecord(body)
+  requireOk(result, `Looking up issue ${issueKey}`)
+  const record = asRecord(result.body)
   const id = record && (record.id ?? asRecord(record.issue)?.id)
   if (id === undefined || id === null) {
-    throw new TempoApiError(`Issue ${issueKey} did not return an id`, status)
+    throw new TempoApiError(
+      `Issue ${issueKey} did not return an id`,
+      result.status,
+      responseContext(result),
+    )
   }
   return String(id)
 }
@@ -136,16 +272,20 @@ export const createCloudClient = (
 
   const getAuthorAccountId = async (): Promise<string> => {
     if (authorAccountId) return authorAccountId
-    const { status, body } = await requestJson(
+    const result = await requestJson(
       `${connection.jiraBaseUrl}/rest/api/3/myself`,
       { method: 'GET', headers: jiraHeaders(connection) },
     )
-    requireOk(status, body, 'Fetching Jira account id')
-    const record = asRecord(body)
+    requireOk(result, 'Fetching Jira account id')
+    const record = asRecord(result.body)
     const accountId =
       record && typeof record.accountId === 'string' ? record.accountId : null
     if (!accountId) {
-      throw new TempoApiError('Jira /myself did not return accountId', status)
+      throw new TempoApiError(
+        'Jira /myself did not return accountId',
+        result.status,
+        responseContext(result),
+      )
     }
     authorAccountId = accountId
     return accountId
@@ -166,24 +306,25 @@ export const createCloudClient = (
   return {
     resolveIssueId: issueKey => resolveJiraIssueId(connection, issueKey),
     createWorklog: async input => {
-      const { status, body } = await requestJson(
-        'https://api.tempo.io/4/worklogs',
-        {
-          method: 'POST',
-          headers: tempoHeaders,
-          body: JSON.stringify(await worklogBody(input)),
-        },
-      )
-      requireOk(status, body, 'Creating Tempo worklog')
-      const record = asRecord(body)
+      const result = await requestJson('https://api.tempo.io/4/worklogs', {
+        method: 'POST',
+        headers: tempoHeaders,
+        body: JSON.stringify(await worklogBody(input)),
+      })
+      requireOk(result, 'Creating Tempo worklog')
+      const record = asRecord(result.body)
       const remoteId = record?.tempoWorklogId ?? record?.id
       if (remoteId === undefined || remoteId === null) {
-        throw new TempoApiError('Tempo did not return a worklog id', status)
+        throw new TempoApiError(
+          'Tempo did not return a worklog id',
+          result.status,
+          responseContext(result),
+        )
       }
       return String(remoteId)
     },
     updateWorklog: async (remoteId, input) => {
-      const { status, body } = await requestJson(
+      const result = await requestJson(
         `https://api.tempo.io/4/worklogs/${encodeURIComponent(remoteId)}`,
         {
           method: 'PUT',
@@ -191,7 +332,7 @@ export const createCloudClient = (
           body: JSON.stringify(await worklogBody(input)),
         },
       )
-      requireOk(status, body, 'Updating Tempo worklog')
+      requireOk(result, 'Updating Tempo worklog')
     },
   }
 }
@@ -224,16 +365,16 @@ export const createDatacenterClient = (
   return {
     resolveIssueId: issueKey => resolveJiraIssueId(connection, issueKey),
     createWorklog: async input => {
-      const { status, body } = await requestJson(`${worklogsUrl}/`, {
+      const result = await requestJson(`${worklogsUrl}/`, {
         method: 'POST',
         headers,
         body: JSON.stringify(worklogBody(input)),
       })
-      requireOk(status, body, 'Creating Tempo worklog')
-      return remoteIdFromBody(body, status)
+      requireOk(result, 'Creating Tempo worklog')
+      return remoteIdFromBody(result.body, result.status)
     },
     updateWorklog: async (remoteId, input) => {
-      const { status, body } = await requestJson(
+      const result = await requestJson(
         `${worklogsUrl}/${encodeURIComponent(remoteId)}`,
         {
           method: 'PUT',
@@ -241,7 +382,7 @@ export const createDatacenterClient = (
           body: JSON.stringify(worklogBody(input)),
         },
       )
-      requireOk(status, body, 'Updating Tempo worklog')
+      requireOk(result, 'Updating Tempo worklog')
     },
   }
 }
