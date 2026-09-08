@@ -86,7 +86,7 @@
     <div class="hero-content text-center">
       <div>
         <h1 class="font-bold text-sm">
-          Generated with ♥️ <a href="https://timetrack.mwco.app">timetrack</a>
+          Generated with ♥️ <a href="https://timetrack.gaia.ws">timetrack</a>
         </h1>
       </div>
     </div>

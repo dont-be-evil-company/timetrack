@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://timetrack.mwco.app/config.schema.json",
+  "$id": "https://timetrack.gaia.ws/config.schema.json",
   "title": "Timetrack configuration",
   "description": "Configuration file for the Timetrack desktop application.",
   "type": "object",

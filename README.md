@@ -26,7 +26,7 @@ The configuration file should be located at:
 > Example configuration file for timetrack:
 
 ```yaml
-# yaml-language-server: $schema=https://timetrack.mwco.app/config.schema.json
+# yaml-language-server: $schema=https://timetrack.gaia.ws/config.schema.json
 ---
 databases:
   - marco: /home/marco/Desktop/timetrack.db

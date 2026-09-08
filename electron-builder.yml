@@ -1,5 +1,5 @@
 ---
-appId: app.mwco.timetrack
+appId: com.the-dont-be-evil-company.timetrack
 productName: timetrack
 directories:
   buildResources: build
@@ -48,11 +48,13 @@ dmg:
   artifactName: ${name}_${arch}.${ext}
   icon: build/icon.icns
 linux:
+  icon: build/icons
   target:
     - AppImage
     - deb
-  maintainer: timetrack.mwco.app
+  maintainer: timetrack.gaia.ws
   category: Utility
+  syncDesktopName: true
 appImage:
   artifactName: ${name}_${arch}.${ext}
 deb:

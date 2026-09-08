@@ -9,6 +9,7 @@
   },
   "license": "MIT",
   "homepage": "https://timetrack.gaia.ws",
+  "desktopName": "com.the-dont-be-evil-company.timetrack.desktop",
   "private": true,
   "scripts": {
     "install:electron": "bun run ./node_modules/electron/install.js",

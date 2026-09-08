@@ -148,7 +148,7 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('app.mwco.timetrack')
+  electronApp.setAppUserModelId('com.the-dont-be-evil-company.timetrack')
 
   app.commandLine.appendSwitch('disable-gpu-vsync')
 
