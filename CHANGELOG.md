@@ -1,3 +1,17 @@
+## [5.17.0](https://github.com/dont-be-evil-company/timetrack/compare/v5.16.4...v5.17.0) (2026-09-08)
+
+### Features
+
+* **tempo,jira:** add issue picker modal ([3cd6f9d](https://github.com/dont-be-evil-company/timetrack/commit/3cd6f9dcf5ba64f0e277fe536c986ed92100f8f5))
+
+## [5.16.4](https://github.com/dont-be-evil-company/timetrack/compare/v5.16.3...v5.16.4) (2026-09-03)
+
+### Bug Fixes
+
+* **ci:** aur package name ([30504e9](https://github.com/dont-be-evil-company/timetrack/commit/30504e9baf6a24363c2015cc174ad46c49022985))
+
+## [5.16.3](https://github.com/dont-be-evil-company/timetrack/compare/v5.16.2...v5.16.3) (2026-09-03)
+
 ## [5.16.2](https://github.com/dont-be-evil-company/timetrack/compare/v5.16.1...v5.16.2) (2026-09-03)
 
 ### Bug Fixes
@@ -228,7 +242,7 @@
 
 ### ⚠ BREAKING CHANGES
 
-* broken linux- and mac-builds (#28)
+* broken linux- and mac-builds ([#28](https://github.com/dont-be-evil-company/timetrack/issues/28))
 
 ### Features
 
@@ -254,7 +268,7 @@
 
 ### ⚠ BREAKING CHANGES
 
-* update electron package, fixes wayland crash (#22)
+* update electron package, fixes wayland crash ([#22](https://github.com/dont-be-evil-company/timetrack/issues/22))
 
 ### Features
 
@@ -276,8 +290,8 @@
 
 ### ⚠ BREAKING CHANGES
 
-* #18 windows icon is missing (#19)
-* new release 3.0.0 🎉 (#20)
+* [#18](https://github.com/dont-be-evil-company/timetrack/issues/18) windows icon is missing ([#19](https://github.com/dont-be-evil-company/timetrack/issues/19))
+* new release 3.0.0 🎉 ([#20](https://github.com/dont-be-evil-company/timetrack/issues/20))
 
 ### Features
 
@@ -293,7 +307,7 @@
 
 ### ⚠ BREAKING CHANGES
 
-* change CNAME (#5)
+* change CNAME ([#5](https://github.com/dont-be-evil-company/timetrack/issues/5))
 
 ### Features
 
