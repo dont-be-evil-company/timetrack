@@ -54,7 +54,9 @@
   <ul class="flex space-x-2">
     <li>
       <div class="tooltip tooltip-bottom" data-tip="Report a Bug">
-        <button class="btn"><Bug size="16" /></button>
+        <button class="btn" onclick={() => handleTopButtonClick('reportABug')}
+          ><Bug size="16" /></button
+        >
       </div>
     </li>
     <li>
